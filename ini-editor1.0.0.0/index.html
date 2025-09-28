@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INI配置编辑器</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        /* 头部样式 */
+        .header {
+            background-color: #4a6fa5;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* 工具栏样式 */
+        .toolbar {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .toolbar button {
+            padding: 8px 16px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .toolbar button:hover {
+            background-color: #3a5a8a;
+        }
+        
+        .toolbar button.secondary {
+            background-color: #6c757d;
+        }
+        
+        .toolbar button.secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .toolbar button.danger {
+            background-color: #dc3545;
+        }
+        
+        .toolbar button.danger:hover {
+            background-color: #c82333;
+        }
+        
+        .toolbar input[type="text"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        /* 主要内容区域样式 */
+        .main-content {
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            flex: 0 0 250px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .sidebar h3 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #495057;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .section-list {
+            list-style: none;
+        }
+        
+        .section-item {
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+        
+        .section-item:hover {
+            background-color: #e9ecef;
+        }
+        
+        .section-item.active {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        
+        /* 编辑器样式 */
+        .editor {
+            flex: 1;
+            min-width: 400px;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            overflow: hidden;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-header {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .editor-header h3 {
+            font-size: 16px;
+            color: #495057;
+        }
+        
+        .editor-header .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .editor-header button {
+            padding: 4px 8px;
+            font-size: 12px;
+            border: 1px solid #dee2e6;
+            background-color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .editor-header button:hover {
+            background-color: #e9ecef;
+        }
+        
+        .editor-content {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .key-value-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .key-value-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .key-value-item input[type="text"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .key-value-item .key-input {
+            width: 200px;
+        }
+        
+        .key-value-item .value-input {
+            flex: 1;
+        }
+        
+        .key-value-item button {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .key-value-item .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .key-value-item .delete-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .key-value-item .move-up-btn,
+        .key-value-item .move-down-btn {
+            background-color: #6c757d;
+            color: white;
+            padding: 6px 8px;
+        }
+        
+        .key-value-item .move-up-btn:hover,
+        .key-value-item .move-down-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        .add-key-value {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .add-key-value input[type="text"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .add-key-value .key-input {
+            width: 200px;
+        }
+        
+        .add-key-value .value-input {
+            flex: 1;
+        }
+        
+        .add-key-value button {
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .add-key-value button:hover {
+            background-color: #218838;
+        }
+        
+        /* 状态栏样式 */
+        .status-bar {
+            background-color: #f8f9fa;
+            padding: 10px 20px;
+            border-top: 1px solid #e9ecef;
+            font-size: 12px;
+            color: #6c757d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-body input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .modal-body textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: monospace;
+            min-height: 200px;
+            resize: vertical;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-footer button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .modal-footer .cancel-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .modal-footer .cancel-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        .modal-footer .confirm-btn {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        
+        .modal-footer .confirm-btn:hover {
+            background-color: #3a5a8a;
+        }
+        
+        /* 代码编辑器样式 */
+        .code-editor {
+            position: relative;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .code-editor textarea {
+            width: 100%;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: none;
+            resize: vertical;
+            min-height: 300px;
+            background-color: #f8f9fa;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                flex: 0 0 auto;
+                max-height: 200px;
+            }
+            
+            .editor {
+                min-width: auto;
+            }
+        }
+        
+        /* 错误提示样式 */
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px 15px;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* 成功提示样式 */
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px 15px;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* 提示框样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            z-index: 2000;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .toast.success {
+            background-color: #28a745;
+        }
+        
+        .toast.error {
+            background-color: #dc3545;
+        }
+        
+        .toast.info {
+            background-color: #17a2b8;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 代码高亮样式 */
+        .ini-comment {
+            color: #888;
+            font-style: italic;
+        }
+        
+        .ini-section {
+            color: #0066cc;
+            font-weight: bold;
+        }
+        
+        .ini-key {
+            color: #cc0000;
+        }
+        
+        .ini-value {
+            color: #008800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>INI配置编辑器</h1>
+            <p>图形化界面，轻松编辑和管理INI配置文件</p>
+        </div>
+        
+        <!-- 工具栏 -->
+        <div class="toolbar">
+            <button id="new-file-btn">新建</button>
+            <button id="open-file-btn">打开</button>
+            <input type="file" id="file-input" style="display: none;" accept=".ini">
+            <button id="save-file-btn">保存</button>
+            <button id="save-as-file-btn">另存为</button>
+            <button id="code-view-btn" class="secondary">代码视图</button>
+            <button id="validate-btn" class="secondary">验证</button>
+            <button id="export-btn" class="secondary">导出</button>
+            <button id="import-btn" class="secondary">导入</button>
+            <button id="help-btn" class="secondary">帮助</button>
+        </div>
+        
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+            <!-- 侧边栏 - 配置节列表 -->
+            <div class="sidebar">
+                <h3>配置节</h3>
+                <ul class="section-list" id="section-list">
+                    <!-- 配置节列表将通过JavaScript动态生成 -->
+                </ul>
+                <div style="margin-top: 20px;">
+                    <button id="add-section-btn" class="secondary" style="width: 100%;">添加配置节</button>
+                </div>
+            </div>
+            
+            <!-- 编辑器区域 -->
+            <div class="editor">
+                <!-- 编辑器头部 -->
+                <div class="editor-header">
+                    <h3 id="current-section-title">选择配置节开始编辑</h3>
+                    <div class="actions">
+                        <button id="rename-section-btn" disabled>重命名</button>
+                        <button id="delete-section-btn" disabled>删除</button>
+                        <button id="duplicate-section-btn" disabled>复制</button>
+                    </div>
+                </div>
+                
+                <!-- 编辑器内容 -->
+                <div class="editor-content">
+                    <div id="no-selection-message" style="text-align: center; padding: 50px 20px; color: #6c757d;">
+                        <p>请从左侧列表中选择一个配置节，或创建一个新的配置节开始编辑</p>
+                    </div>
+                    
+                    <div id="key-value-editor" style="display: none;">
+                        <div class="key-value-list" id="key-value-list">
+                            <!-- 键值对列表将通过JavaScript动态生成 -->
+                        </div>
+                        
+                        <div class="add-key-value">
+                            <input type="text" id="new-key" placeholder="键名">
+                            <input type="text" id="new-value" placeholder="值">
+                            <button id="add-key-value-btn">添加</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div id="status-info">就绪</div>
+            <div id="file-info">未保存</div>
+        </div>
+    </div>
+    
+    <!-- 代码视图模态框 -->
+    <div class="modal" id="code-view-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>代码视图</h2>
+            </div>
+            <div class="modal-body">
+                <div class="code-editor">
+                    <textarea id="code-editor" spellcheck="false"></textarea>
+                </div>
+                <div class="error-message" id="code-error-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="code-view-close-btn" class="cancel-btn">关闭</button>
+                <button id="code-view-apply-btn" class="confirm-btn">应用更改</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加配置节模态框 -->
+    <div class="modal" id="add-section-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>添加配置节</h2>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="new-section-name" placeholder="配置节名称（不含方括号）" autofocus>
+                <div class="error-message" id="section-error-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="add-section-cancel-btn" class="cancel-btn">取消</button>
+                <button id="add-section-confirm-btn" class="confirm-btn">添加</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 重命名配置节模态框 -->
+    <div class="modal" id="rename-section-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>重命名配置节</h2>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="rename-section-name" placeholder="新的配置节名称" autofocus>
+                <div class="error-message" id="rename-error-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="rename-section-cancel-btn" class="cancel-btn">取消</button>
+                <button id="rename-section-confirm-btn" class="confirm-btn">重命名</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 帮助模态框 -->
+    <div class="modal" id="help-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>使用帮助</h2>
+            </div>
+            <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <h3>INI配置编辑器使用指南</h3>
+                <p>INI文件是一种简单的配置文件格式，由节（sections）和键值对（key-value pairs）组成。</p>
+                
+                <h4>基本操作</h4>
+                <ul>
+                    <li><strong>新建文件：</strong>点击工具栏的"新建"按钮创建一个新的INI文件。</li>
+                    <li><strong>打开文件：</strong>点击工具栏的"打开"按钮选择并打开一个已有的INI文件。</li>
+                    <li><strong>保存文件：</strong>点击工具栏的"保存"按钮保存当前编辑的文件。</li>
+                    <li><strong>另存为：</strong>点击工具栏的"另存为"按钮将当前文件保存为新文件。</li>
+                </ul>
+                
+                <h4>编辑配置节</h4>
+                <ul>
+                    <li><strong>添加配置节：</strong>点击左侧的"添加配置节"按钮，输入配置节名称。</li>
+                    <li><strong>选择配置节：</strong>点击左侧列表中的配置节进行编辑。</li>
+                    <li><strong>重命名配置节：</strong>选择配置节后，点击编辑器头部的"重命名"按钮。</li>
+                    <li><strong>删除配置节：</strong>选择配置节后，点击编辑器头部的"删除"按钮。</li>
+                    <li><strong>复制配置节：</strong>选择配置节后，点击编辑器头部的"复制"按钮。</li>
+                </ul>
+                
+                <h4>编辑键值对</h4>
+                <ul>
+                    <li><strong>添加键值对：</strong>在编辑器底部输入键名和值，点击"添加"按钮。</li>
+                    <li><strong>编辑键值对：</strong>直接在输入框中修改键名或值。</li>
+                    <li><strong>删除键值对：</strong>点击键值对右侧的"删除"按钮。</li>
+                    <li><strong>移动键值对：</strong>点击键值对右侧的"上移"或"下移"按钮调整顺序。</li>
+                </ul>
+                
+                <h4>高级功能</h4>
+                <ul>
+                    <li><strong>代码视图：</strong>点击工具栏的"代码视图"按钮，以纯文本形式查看和编辑INI文件。</li>
+                    <li><strong>验证：</strong>点击工具栏的"验证"按钮，检查INI文件格式是否正确。</li>
+                    <li><strong>导出：</strong>点击工具栏的"导出"按钮，将配置导出为其他格式。</li>
+                    <li><strong>导入：</strong>点击工具栏的"导入"按钮，从其他格式导入配置。</li>
+                </ul>
+                
+                <h4>INI文件格式说明</h4>
+                <ul>
+                    <li><strong>注释：</strong>以分号（;）或井号（#）开头的行为注释。</li>
+                    <li><strong>配置节：</strong>用方括号（[]）包围的部分，如[section]。</li>
+                    <li><strong>键值对：</strong>格式为key=value，位于配置节下方。</li>
+                    <li><strong>特殊字符：</strong>值中包含空格或特殊字符时，建议使用引号包围。</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button id="help-close-btn" class="confirm-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 提示框 -->
+    <div class="toast" id="toast"></div>
+    
+    <!-- JavaScript文件 -->
+    <script src="editor.js"></script>
+</body>
+</html>
