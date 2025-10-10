@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNG 转 ICO 工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        #fileInput {
+            margin: 20px 0;
+        }
+        #preview {
+            margin: 20px auto;
+            max-width: 200px;
+            display: none;
+        }
+        #downloadLink {
+            display: none;
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        #downloadLink:hover {
+            background-color: #45a049;
+        }
+        .instructions {
+            text-align: left;
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        .step {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PNG 转 ICO 工具</h1>
+        <p>请选择要转换的 PNG 图像文件（推荐尺寸：16x16、32x32 或 48x48 像素）</p>
+        <input type="file" id="fileInput" accept=".png">
+        <div id="previewContainer">
+            <img id="preview" src="" alt="预览图像">
+        </div>
+        <a id="downloadLink" href="#">下载 ICO 文件</a>
+    </div>
+    
+    <div class="instructions">
+        <h3>使用说明：</h3>
+        <div class="step">1. 点击 "选择文件" 按钮，选择您的 favicon.png 文件</div>
+        <div class="step">2. 系统会自动转换并显示下载链接</div>
+        <div class="step">3. 点击 "下载 ICO 文件" 保存转换后的图标</div>
+        <div class="step">4. 将下载的 favicon.ico 文件上传到您的网站根目录</div>
+        <div class="step">5. 在您的 HTML 页面的 &lt;head&gt; 部分添加以下代码：</div>
+        <div class="step">&lt;link rel="icon" type="image/x-icon" href="/favicon.ico"&gt;</div>
+    </div>
+
+    <script>
+        // ico.js 库 - 用于在浏览器中创建 ICO 文件
+        // 简化版的 ICO 生成功能
+        function createICO(images) {
+            const header = new ArrayBuffer(6);
+            const headerView = new DataView(header);
+            
+            // ICO 文件头
+            headerView.setUint16(0, 0, true); // 保留字段，必须为0
+            headerView.setUint16(2, 1, true); // 类型，1=ICO
+            headerView.setUint16(4, images.length, true); // 图像数量
+            
+            let offset = 6 + images.length * 16; // 文件头 + 目录项
+            let dataSize = offset;
+            
+            // 计算总数据大小
+            for (const img of images) {
+                dataSize += img.data.length;
+            }
+            
+            const buffer = new ArrayBuffer(dataSize);
+            const view = new DataView(buffer);
+            
+            // 复制文件头
+            new Uint8Array(buffer, 0, 6).set(new Uint8Array(header));
+            
+            // 写入目录项和图像数据
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i];
+                
+                // 目录项
+                view.setUint8(6 + i * 16, img.width);
+                view.setUint8(6 + i * 16 + 1, img.height);
+                view.setUint8(6 + i * 16 + 2, 0); // 颜色数，0=256+色
+                view.setUint8(6 + i * 16 + 3, 0); // 保留字段
+                view.setUint16(6 + i * 16 + 4, 1, true); // 颜色平面
+                view.setUint16(6 + i * 16 + 6, 32, true); // 位深度
+                view.setUint32(6 + i * 16 + 8, img.data.length, true); // 数据大小
+                view.setUint32(6 + i * 16 + 12, offset, true); // 数据偏移量
+                
+                // 写入图像数据
+                new Uint8Array(buffer, offset, img.data.length).set(img.data);
+                offset += img.data.length;
+            }
+            
+            return buffer;
+        }
+
+        // 主逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('fileInput');
+            const preview = document.getElementById('preview');
+            const downloadLink = document.getElementById('downloadLink');
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // 检查文件类型
+                if (!file.type.match('image/png')) {
+                    alert('请选择 PNG 格式的图像文件');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        // 显示预览
+                        preview.src = event.target.result;
+                        preview.style.display = 'block';
+                        
+                        // 创建canvas并绘制图像
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // 定义要生成的尺寸
+                        const sizes = [16, 32, 48];
+                        const images = [];
+                        
+                        sizes.forEach(size => {
+                            canvas.width = size;
+                            canvas.height = size;
+                            
+                            // 绘制图像并保留透明度
+                            ctx.clearRect(0, 0, size, size);
+                            ctx.drawImage(img, 0, 0, size, size);
+                            
+                            // 获取图像数据
+                            // 注意：这里简化处理，实际ICO格式需要特定的BMP格式数据
+                            // 对于现代浏览器，我们可以直接使用PNG数据
+                            canvas.toBlob(blob => {
+                                const reader = new FileReader();
+                                reader.onload = function() {
+                                    const arrayBuffer = this.result;
+                                    const uint8Array = new Uint8Array(arrayBuffer);
+                                    
+                                    images.push({
+                                        width: size,
+                                        height: size,
+                                        data: uint8Array
+                                    });
+                                    
+                                    // 当所有尺寸都处理完成后生成ICO
+                                    if (images.length === sizes.length) {
+                                        generateAndDownloadICO(images);
+                                    }
+                                };
+                                reader.readAsArrayBuffer(blob);
+                            }, 'image/png');
+                        });
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            function generateAndDownloadICO(images) {
+                try {
+                    // 创建ICO文件
+                    const icoBuffer = createICO(images);
+                    const blob = new Blob([icoBuffer], {type: 'image/x-icon'});
+                    const url = URL.createObjectURL(blob);
+                    
+                    // 设置下载链接
+                    downloadLink.href = url;
+                    downloadLink.download = 'favicon.ico';
+                    downloadLink.style.display = 'inline-block';
+                } catch (error) {
+                    console.error('生成ICO文件时出错:', error);
+                    alert('生成ICO文件时出错，请刷新页面重试');
+                }
+            }
+            
+            // 对于已有favicon.png的情况，可以直接提供下载链接
+            if (document.location.hostname !== 'localhost') {
+                // 尝试检测是否存在favicon.png
+                const testImg = new Image();
+                testImg.onload = function() {
+                    // 如果图像加载成功，可以提供快速下载选项
+                    const quickDownloadBtn = document.createElement('button');
+                    quickDownloadBtn.textContent = '快速转换当前网站的favicon';
+                    quickDownloadBtn.onclick = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const img = new Image();
+                        
+                        img.onload = function() {
+                            // 创建16x16尺寸
+                            canvas.width = 16;
+                            canvas.height = 16;
+                            ctx.drawImage(img, 0, 0, 16, 16);
+                            
+                            canvas.toBlob(blob => {
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = 'favicon.ico';
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            }, 'image/x-icon');
+                        };
+                        img.src = '/favicon.png?' + new Date().getTime(); // 防止缓存
+                    };
+                    document.querySelector('.container').appendChild(quickDownloadBtn);
+                };
+                testImg.src = '/favicon.png?' + new Date().getTime();
+            }
+        });
+    </script>
+</body>
+</html>
