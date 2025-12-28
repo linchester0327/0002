@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑项目状态</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        h1, h2 { color: #333; }
+        .hidden { display: none; }
+        #login-section, #edit-section { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+        input[type="password"], input[type="text"], select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        button:hover { background-color: #45a049; }
+        button.delete { background-color: #f44336; }
+        button.delete:hover { background-color: #d32f2f; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .message { margin-top: 15px; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .actions { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>编辑项目状态</h1>
+    <div id="login-section">
+        <h2>身份验证</h2>
+        <p>请输入密码以编辑项目状态：</p>
+        <form onsubmit="event.preventDefault(); verifyPassword();">
+            <input type="password" id="password-input" placeholder="输入密码" autocomplete="off">
+            <button type="submit">验证密码</button>
+        </form>
+        <p id="login-message" class="message"></p>
+    </div>
+    <div id="edit-section" class="hidden">
+        <h2>项目管理</h2>
+        <p>您可以修改项目信息，或添加/删除项目。编辑后请保存更改。</p>
+        <div id="project-list"></div>
+        <div class="actions">
+            <button onclick="undo()">撤销 (Ctrl+Z)</button>
+            <button onclick="redo()">重做 (Ctrl+Y)</button>
+            <button onclick="addNewProject()">添加新项目</button>
+            <button onclick="saveChanges()">保存更改</button>
+            <button onclick="window.location.href='index.html'">返回状态页</button>
+        </div>
+        <p id="save-message" class="message"></p>
+    </div>
+    <script>
+        let projectsData = [];
+        let storedPassword = '';
+
+        async function verifyPassword() {
+            const input = document.getElementById('password-input').value.trim();
+            const messageEl = document.getElementById('login-message');
+            messageEl.textContent = '';
+            messageEl.className = 'message';
+
+            if (!input) {
+                messageEl.textContent = '请输入密码。';
+                messageEl.classList.add('error');
+                return;
+            }
+
+            try {
+                // 从save.php获取密码
+                const response = await fetch('save.php?action=getpassword');
+                if (!response.ok) {
+                    throw new Error(`无法获取密码: ${response.status}`);
+                }
+                const result = await response.json();
+                storedPassword = result.password;
+                
+                if (input === storedPassword) {
+                    document.getElementById('login-section').classList.add('hidden');
+                    document.getElementById('edit-section').classList.remove('hidden');
+                    messageEl.textContent = '验证成功！正在加载项目数据...';
+                    messageEl.classList.add('success');
+                    loadProjectsForEdit();
+                } else {
+                    messageEl.textContent = '密码错误，请重试。';
+                    messageEl.classList.add('error');
+                }
+            } catch (error) {
+                messageEl.textContent = `验证失败: ${error.message}`;
+                messageEl.classList.add('error');
+            }
+        }
+
+        async function loadProjectsForEdit() {
+            try {
+                const response = await fetch('main.json');
+                if (!response.ok) throw new Error(`加载项目数据失败: ${response.status}`);
+                const data = await response.json();
+                projectsData = data.projects;
+                displayProjectsForEdit();
+                // 保存初始状态到历史记录
+                saveToHistory();
+            } catch (error) {
+                document.getElementById('project-list').innerHTML = `<p class="error">加载失败: ${error.message}</p>`;
+            }
+        }
+
+        // 防抖函数，用于减少历史记录的保存次数
+        function debounce(func, delay) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        // 使用事件委托代替为每个元素添加事件监听器
+        function setupEventListeners() {
+            const container = document.getElementById('project-list');
+            
+            // 为所有输入框添加事件委托
+            container.addEventListener('input', debounce((event) => {
+                if (event.target.tagName === 'INPUT') {
+                    const id = event.target.id;
+                    const index = parseInt(id.split('-')[1], 10);
+                    if (!isNaN(index) && index < projectsData.length) {
+                        projectsData[index].name = document.getElementById(`name-${index}`).value.trim() || "未命名项目";
+                        projectsData[index].description = document.getElementById(`desc-${index}`).value.trim() || "无描述";
+                        saveToHistory();
+                    }
+                }
+            }, 500));
+            
+            // 为所有选择框添加事件委托
+            container.addEventListener('change', debounce((event) => {
+                if (event.target.tagName === 'SELECT') {
+                    const id = event.target.id;
+                    const index = parseInt(id.split('-')[1], 10);
+                    if (!isNaN(index) && index < projectsData.length) {
+                        projectsData[index].status = event.target.value;
+                        saveToHistory();
+                    }
+                }
+            }, 500));
+            
+            // 为所有删除按钮添加事件委托
+            container.addEventListener('click', (event) => {
+                if (event.target.classList.contains('delete')) {
+                    const button = event.target;
+                    const row = button.closest('tr');
+                    if (row) {
+                        const index = Array.from(row.parentNode.children).indexOf(row) - 1; // 减去表头行
+                        if (index >= 0 && index < projectsData.length) {
+                            deleteProject(index);
+                        }
+                    }
+                }
+            });
+        }
+        
+        function displayProjectsForEdit() {
+            const container = document.getElementById('project-list');
+            if (!projectsData || projectsData.length === 0) {
+                container.innerHTML = '<p>暂无项目数据。</p>';
+                return;
+            }
+            
+            // 使用更高效的字符串拼接方式生成HTML
+            let html = '<table><tr><th>项目名称</th><th>状态</th><th>描述</th><th>操作</th></tr>';
+            
+            for (let i = 0; i < projectsData.length; i++) {
+                const proj = projectsData[i];
+                const name = proj.name || '';
+                const desc = proj.description || '';
+                const status = proj.status || '计划中';
+                
+                // 直接拼接HTML字符串，比创建DOM元素更快
+                html += `<tr>
+                    <td><input type="text" id="name-${i}" value="${name}" placeholder="项目名称"></td>
+                    <td>
+                        <select id="status-${i}">
+                            <option value="计划中" ${status === '计划中' ? 'selected' : ''}>计划中</option>
+                            <option value="进行中" ${status === '进行中' ? 'selected' : ''}>进行中</option>
+                            <option value="已完成" ${status === '已完成' ? 'selected' : ''}>已完成</option>
+                        </select>
+                    </td>
+                    <td><input type="text" id="desc-${i}" value="${desc}" placeholder="项目描述"></td>
+                    <td><button class="delete">删除</button></td>
+                </tr>`;
+            }
+            
+            html += '</table>';
+            
+            // 使用DocumentFragment减少DOM重绘次数
+            const fragment = document.createDocumentFragment();
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            while (tempDiv.firstChild) {
+                fragment.appendChild(tempDiv.firstChild);
+            }
+            
+            // 清空容器并添加新内容
+            container.innerHTML = '';
+            container.appendChild(fragment);
+        }
+
+        function addNewProject() {
+            // 保存当前状态到历史记录
+            saveToHistory();
+            
+            const newProject = { name: "新项目", status: "计划中", description: "" };
+            projectsData.push(newProject);
+            
+            // 只添加新行，不重新渲染整个列表
+            const table = document.querySelector('#project-list table');
+            if (table) {
+                const i = projectsData.length - 1;
+                const row = table.insertRow();
+                
+                row.innerHTML = `
+                    <td><input type="text" id="name-${i}" value="${newProject.name}" placeholder="项目名称"></td>
+                    <td>
+                        <select id="status-${i}">
+                            <option value="计划中" ${newProject.status === '计划中' ? 'selected' : ''}>计划中</option>
+                            <option value="进行中" ${newProject.status === '进行中' ? 'selected' : ''}>进行中</option>
+                            <option value="已完成" ${newProject.status === '已完成' ? 'selected' : ''}>已完成</option>
+                        </select>
+                    </td>
+                    <td><input type="text" id="desc-${i}" value="${newProject.description}" placeholder="项目描述"></td>
+                    <td><button class="delete">删除</button></td>
+                `;
+            } else {
+                // 如果表格不存在，重新渲染整个列表
+                displayProjectsForEdit();
+            }
+        }
+
+        function deleteProject(index) {
+            if (confirm('确定要删除这个项目吗？')) {
+                // 保存当前状态到历史记录
+                saveToHistory();
+                
+                projectsData.splice(index, 1);
+                
+                // 只删除对应行，不重新渲染整个列表
+                const table = document.querySelector('#project-list table');
+                if (table && table.rows.length > index + 1) {
+                    table.deleteRow(index + 1); // +1 是因为第一行是表头
+                    
+                    // 更新剩余行的索引
+                    for (let i = index + 1; i < table.rows.length; i++) {
+                        const row = table.rows[i];
+                        const inputs = row.querySelectorAll('input, select');
+                        inputs.forEach(input => {
+                            const oldId = input.id;
+                            const type = oldId.split('-')[0];
+                            input.id = `${type}-${i-1}`;
+                        });
+                    }
+                } else {
+                    // 如果表格不存在或索引无效，重新渲染整个列表
+                    displayProjectsForEdit();
+                }
+            }
+        }
+
+        // 操作历史记录
+        let history = [];
+        let historyIndex = -1;
+        const MAX_HISTORY = 50;
+
+        // 保存当前状态到历史记录
+        function saveToHistory() {
+            // 移除历史记录中当前索引之后的所有记录
+            history = history.slice(0, historyIndex + 1);
+            
+            // 深拷贝当前项目数据
+            const currentState = JSON.parse(JSON.stringify(projectsData));
+            
+            // 添加到历史记录
+            history.push(currentState);
+            
+            // 限制历史记录长度
+            if (history.length > MAX_HISTORY) {
+                history.shift();
+            } else {
+                historyIndex++;
+            }
+        }
+
+        // 直接保存更改到服务器
+        async function saveChanges() {
+            // 从输入框更新 projectsData
+            for (let i = 0; i < projectsData.length; i++) {
+                projectsData[i].name = document.getElementById(`name-${i}`).value.trim() || "未命名项目";
+                projectsData[i].status = document.getElementById(`status-${i}`).value;
+                projectsData[i].description = document.getElementById(`desc-${i}`).value.trim() || "无描述";
+            }
+            
+            // 将更新后的数据转换为 JSON 字符串（不需要包含密码，由save.php从password.ini读取）
+            const dataStr = JSON.stringify({ projects: projectsData }, null, 2);
+            
+            try {
+                // 发送到save.php处理保存操作
+                const response = await fetch('save.php', {
+                    method: 'POST',
+                    body: dataStr,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        document.getElementById('save-message').textContent = '更改已成功保存到 main.json 文件。';
+                        document.getElementById('save-message').className = 'message success';
+                    } else {
+                        document.getElementById('save-message').textContent = '保存失败：' + result.message;
+                        document.getElementById('save-message').className = 'message error';
+                    }
+                } else {
+                    document.getElementById('save-message').textContent = '保存失败：服务器返回错误 ' + response.status;
+                    document.getElementById('save-message').className = 'message error';
+                }
+            } catch (error) {
+                // 显示保存失败错误信息
+                document.getElementById('save-message').textContent = '保存失败：' + error.message;
+                document.getElementById('save-message').className = 'message error';
+            }
+        }
+
+        // 撤销操作
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                projectsData = JSON.parse(JSON.stringify(history[historyIndex]));
+                displayProjectsForEdit();
+                document.getElementById('save-message').textContent = '已撤销上一步操作。';
+                document.getElementById('save-message').className = 'message info';
+            }
+        }
+
+        // 重做操作
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                projectsData = JSON.parse(JSON.stringify(history[historyIndex]));
+                displayProjectsForEdit();
+                document.getElementById('save-message').textContent = '已重做上一步操作。';
+                document.getElementById('save-message').className = 'message info';
+            }
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (event) => {
+            // Ctrl+Z 撤销
+            if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
+                event.preventDefault();
+                undo();
+            }
+            // Ctrl+Y 重做
+            if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
+                event.preventDefault();
+                redo();
+            }
+        });
+
+        // 页面加载完成后初始化事件监听器
+        document.addEventListener('DOMContentLoaded', setupEventListeners);
+    </script>
+</body>
+</html>
