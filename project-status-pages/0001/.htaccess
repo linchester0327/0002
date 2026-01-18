@@ -1,5 +1,0 @@
-# 限制对password.ini文件的直接访问
-<Files "password.ini">
-    Order allow,deny
-    Deny from all
-</Files>
