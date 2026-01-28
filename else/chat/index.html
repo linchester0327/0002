@@ -1,0 +1,2741 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- These did not seem to help with avoiding stale pages
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    -->
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Add these new meta tags for splash screen -->
+    <link rel="apple-touch-icon" href="./media/liberdus_logo_512.png" />
+    <meta name="apple-mobile-web-app-title" content="Liberdus" />
+
+    <!-- Cache control meta tags for offline functionality -->
+    <!-- set for a year -->
+    <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+    <!-- fallback for when max-age is not supported -->
+    <meta http-equiv="Expires" content="Wed, 06 Oct 3026 23:59:00 GMT">
+
+    <!-- Add splash screen images for different iPhone sizes -->
+    <link
+      rel="apple-touch-startup-image"
+      href="splash_640x1136.png"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="splash_750x1334.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="splash_1170x2532.png"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="splash_1179x2556.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="splash_1290x2796.png"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
+    />
+
+    <title>Liberdus</title>
+    <!--
+      QRCode lib from
+      https://github.com/davidshimjs/qrcodejs
+      https://github.com/davidshimjs/qrcodejs/blob/master/qrcode.js
+    -->
+    <script src="./external/qr.js"></script>
+    <script src="./network.js"></script>
+    <link rel="stylesheet" href="./styles.css" />
+    <!-- <link rel="manifest" href="./manifest.json" /> -->
+  </head>
+  <body>
+    <script src="./app.js" type="module"></script>
+    <script src="./lib.js" type="module"></script>
+    <script src="./crypto.js" type="module"></script>
+    <div class="container">
+      <header class="header" id="header">
+        <div id="logo">
+          <a href="https://liberdus.com" target="_blank" title="Visit Liberdus website" class="logo-link"
+            ><img src="./media/liberdus_logo_50.png"
+          /></a>
+        </div>
+        <div class="app-name-container">
+          <div class="app-name-avatar"></div>
+          <div class="app-name">Liberdus</div>
+        </div>
+        <div class="header-icons">
+          <div class="offline-indicator" id="offlineIndicator">Offline</div>
+          <button class="icon-button" id="upcomingCallsBtn" style="display: none;"></button>
+          <button class="icon-button" id="toggleSettings"></button>
+          <button class="icon-button" id="toggleMenu"></button>
+        </div>
+      </header>
+
+      <div class="welcome-screen" id="welcomeScreen">
+        <a href="https://liberdus.com" target="_blank" title="Visit Liberdus website" class="logo-link">
+          <img src="./media/liberdus_logo_250.png" alt="Liberdus Logo" style="margin-bottom: 20px" />
+        </a>
+        <h1>
+          Liberdus<br />
+          <div style="font-size: 0.8rem; margin-top: 1px; text-align: center" id="networkNameDisplay"></div>
+        </h1>
+        <div class="welcome-buttons">
+          <button id="signInButton" class="btn btn--primary btn--pill btn--full hidden">Sign In</button>
+          <button id="createAccountButton" class="btn btn--primary btn--pill btn--full hidden">Create Account</button>
+          <button id="openWelcomeMenu" class="btn btn--secondary btn--pill btn--full hidden">Menu</button>
+        </div>
+        <div style="font-size: 0.8rem; margin-top: 10px; text-align: center">
+          Version <span id="versionDisplay"></span>
+        </div>
+        <div style="font-size: 0.8rem; margin-top: 5px; text-align: center" id="appVersionDisplay" class="hidden">
+          App Version: <span id="appVersionText"></span>
+        </div>
+        <!-- Add a unused anchor tag with nothing in it and add a class to it so can't shift and end up on another modal. Should still be displayed but will just show nothing -->
+        <a class="last-item" href="#" id="welcomeScreenLastItem"> </a>
+      </div>
+
+      <div class="app-screen" id="chatsScreen">
+        <!-- search bar -->
+        <div class="search-bar-container" id="searchBarContainer">
+          <div class="search-bar">
+            <span class="search-icon"></span>
+            <input
+              type="text"
+              id="searchInput"
+              class="search-input"
+              placeholder="Search messages..."
+              autocomplete="off"
+              readonly
+            />
+          </div>
+        </div>
+        <ul class="chat-list" id="chatList">
+          <div class="empty-state">
+            <div></div>
+            <div>Click the + button to start a chat</div>
+            <div>Your conversations will appear here</div>
+          </div>
+        </ul>
+      </div>
+
+      <div class="app-screen" id="contactsScreen">
+        <!-- Add search bar for contacts -->
+        <div class="search-bar-container" id="contactSearchBarContainer">
+          <div class="search-bar">
+            <span class="search-icon"></span>
+            <input
+              type="text"
+              id="contactSearchInput"
+              class="search-input"
+              placeholder="Search contacts..."
+              autocomplete="off"
+              readonly
+            />
+          </div>
+        </div>
+        <ul class="chat-list" id="contactsList">
+          <div class="empty-state">
+            <div></div>
+            <div>No Contacts Yet</div>
+            <div>Your contacts will appear here</div>
+          </div>
+          <!-- Contact items will be inserted here -->
+        </ul>
+      </div>
+      <button class="floating-button" id="newChatButton">+</button>
+
+      <div class="app-screen" id="walletScreen">
+        <div class="wallet-balance">
+          <div class="balance-label">Total Balance</div>
+          <div class="balance-amount">
+            <span id="walletTotalBalance">-.--</span>
+            <button class="refresh-button" id="refreshBalance">↻</button>
+          </div>
+        </div>
+        <div class="wallet-actions">
+          <button class="wallet-action-button" id="openSendAssetFormModal">
+            <span class="action-icon"></span>
+            <span class="action-label">Send</span>
+          </button>
+          <button class="wallet-action-button" id="openReceiveModal">
+            <span class="action-icon"></span>
+            <span class="action-label">Receive</span>
+          </button>
+          <button class="wallet-action-button" id="openHistoryModal">
+            <span class="action-icon"></span>
+            <span class="action-label">History</span>
+          </button>
+          <div class="wallet-actions-break"></div>
+          <button class="wallet-action-button" id="openBuyButton">
+            <span class="action-icon"></span>
+            <span class="action-label">Buy</span>
+          </button>
+          <button class="wallet-action-button" id="openSellButton">
+            <span class="action-icon"></span>
+            <span class="action-label">Sell</span>
+          </button>
+          <button class="wallet-action-button" id="openFaucetBridgeButton">
+            <span class="action-icon"></span>
+            <span class="action-label">Faucet</span>
+          </button>
+        </div>
+        <div class="wallet-assets">
+          <div class="section-title">Assets</div>
+          <div id="assetsList">
+            <div class="empty-state">
+              <div></div>
+              <div>No Assets Yet</div>
+              <div>Your assets will appear here</div>
+            </div>
+            <!-- List of assets will be inserted here -->
+          </div>
+        </div>
+      </div>
+
+      <footer class="footer" id="footer">
+        <div class="nav-buttons">
+          <button class="nav-button" id="switchToChats">Chats</button>
+          <button class="nav-button" id="switchToContacts">Contacts</button>
+          <button class="nav-button" id="switchToWallet">Wallet</button>
+        </div>
+        <!-- set focus on last-item in the footer -->
+        <a class="last-item" href="#"> </a>
+      </footer>
+
+      <!-- New Chat Modal -->
+      <div class="modal fixed-header" id="newChatModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeNewChatModal"></button>
+          <div class="modal-title">New Chat</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <form id="newChatForm" class="form--narrow">
+              <div class="form-group">
+                <label for="recipient"
+                  >Recipient <span id="chatRecipientError" style="color: #dc3545; display: none"></span
+                ></label>
+                <div style="display: flex; align-items: center; gap: 0.5rem">
+                  <input
+                    type="text"
+                    id="chatRecipient"
+                    class="form-control"
+                    placeholder="Enter username"
+                    required
+                    pattern="[a-zA-Z0-9]*"
+                    inputmode="text"
+                    style="flex: 1"
+                  />
+                  <span class="input-append-icons">
+                    <button type="button" id="newChatUploadQRButton" class="icon-button" title="Upload QR image"></button>
+                    <button type="button" id="newChatScanQRButton" class="icon-button" title="Scan QR"></button>
+                  </span>
+                  <input type="file" id="newChatQRFileInput" accept="image/*" style="display: none" />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full">Continue</button>
+              </div>
+              <div class="form-group form-group--divider">
+                <p>Or invite contacts from your other apps.</p>
+                <button type="button" id="newChatInviteButton" class="btn btn--secondary btn--pill btn--full">Invite</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Menu Modal -->
+      <div class="modal fixed-header" id="menuModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeMenu"></button>
+          <div class="modal-title">Menu</div>
+          <button class="sign-out-header-button" id="signOutMenuHeader" data-icon="log-out" title="Sign Out"></button>
+        </div>
+        <div class="modal-content">
+          <ul class="menu-list">
+            <li class="menu-item" id="openInvite" data-icon="mail">Invite</li>
+            <li class="menu-item" id="openFarm" data-icon="trending-up">Farm</li>
+            <li class="menu-item" id="openValidator" data-icon="shield">Validator</li>
+            <li class="menu-item" id="openDao" data-icon="dao" style="display: none;">DAO</li>
+            <li class="menu-item" id="openBridge" data-icon="arrow-right-arrow-left">Bridge</li>
+            <li class="menu-item" id="openExplorer" data-icon="search">Explorer</li>
+            <li class="menu-item" id="openMonitor" data-icon="globe">Network</li>
+            <li class="menu-item" id="openLogs" data-icon="file-text">Logs</li>
+            <li class="menu-item" id="openHelp" data-icon="github">Help</li>
+            <li class="menu-item" id="openUpdate" data-icon="smartphone" style="display: none;">Update</li>
+            <li class="menu-item" id="openAbout" data-icon="info">About</li>
+            <li class="menu-item sign-out" id="handleSignOut" data-icon="log-out">Sign Out</li>
+          </ul>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- DAO Modal -->
+      <div class="modal fixed-header" id="daoModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeDaoModal"></button>
+          <div class="modal-title" id="daoModalTitle">DAO</div>
+          <button class="icon-button filter-icon" id="daoFilterButton" aria-label="Filter"></button>
+        </div>
+        <div class="modal-content">
+          <div class="dao-toolbar">
+            <div class="dao-group-toggle" role="tablist" aria-label="Proposal group">
+              <button class="dao-group-toggle-button" id="daoGroupActiveButton" type="button">Active</button>
+              <button class="dao-group-toggle-button" id="daoGroupArchivedButton" type="button">Archived</button>
+            </div>
+          </div>
+          <ul class="chat-list" id="daoProposalList">
+            <div class="empty-state" id="daoProposalEmptyState">
+              <div></div>
+              <div>No proposals found</div>
+              <div>Use + to create a proposal</div>
+            </div>
+          </ul>
+          <button class="floating-button" id="daoAddProposalButton" aria-label="Add proposal">+</button>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- DAO Status Context Menu -->
+      <div class="message-context-menu" id="daoStatusContextMenu" style="display: none;">
+        <div class="context-menu-option" data-state-key="discussion">
+          <span class="context-menu-text" id="daoStatusOptionDiscussion">Discussion</span>
+        </div>
+        <div class="context-menu-option" data-state-key="withheld">
+          <span class="context-menu-text" id="daoStatusOptionWithheld">Withheld</span>
+        </div>
+        <div class="context-menu-option" data-state-key="voting">
+          <span class="context-menu-text" id="daoStatusOptionVoting">Voting</span>
+        </div>
+        <div class="context-menu-option" data-state-key="rejected">
+          <span class="context-menu-text" id="daoStatusOptionRejected">Rejected</span>
+        </div>
+        <div class="context-menu-option" data-state-key="accepted">
+          <span class="context-menu-text" id="daoStatusOptionAccepted">Accepted</span>
+        </div>
+        <div class="context-menu-option" data-state-key="applied">
+          <span class="context-menu-text" id="daoStatusOptionApplied">Applied</span>
+        </div>
+        <div class="context-menu-option" data-state-key="executing">
+          <span class="context-menu-text" id="daoStatusOptionExecuting">Executing</span>
+        </div>
+        <div class="context-menu-option" data-state-key="terminated">
+          <span class="context-menu-text" id="daoStatusOptionTerminated">Terminated</span>
+        </div>
+        <div class="context-menu-option" data-state-key="completed">
+          <span class="context-menu-text" id="daoStatusOptionCompleted">Completed</span>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Add Proposal Modal -->
+      <div class="modal fixed-header" id="addProposalModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeAddProposalModal"></button>
+          <div class="modal-title">Add Proposal</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <form id="addProposalForm" class="form--narrow">
+              <div class="form-group">
+                <label for="addProposalTitle">Title</label>
+                <input id="addProposalTitle" class="form-control" type="text" maxlength="120" required />
+              </div>
+              <div class="form-group">
+                <label for="addProposalType">Type</label>
+                <select id="addProposalType" class="form-control" required>
+                  <optgroup label="Treasury">
+                    <option value="treasury_project">Project</option>
+                    <option value="treasury_mint">Mint coins (fund projects)</option>
+                  </optgroup>
+                  <optgroup label="Parameters">
+                    <option value="params_governance">Governance</option>
+                    <option value="params_economic">Economic</option>
+                    <option value="params_protocol">Protocol</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div id="addProposalTypeFields"></div>
+              <div class="form-group">
+                <label for="addProposalSummary">Summary</label>
+                <textarea id="addProposalSummary" class="form-control" rows="6" maxlength="2000" placeholder="Describe the proposal" required></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full">Submit</button>
+                <button type="button" id="cancelAddProposal" class="btn btn--secondary btn--pill btn--full">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Proposal Info Modal -->
+      <div class="modal fixed-header" id="proposalInfoModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeProposalInfoModal"></button>
+          <div class="modal-title">Proposal</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div style="padding: 1rem">
+              <div style="color: var(--secondary-text-color); font-size: 0.9rem; margin-bottom: 6px" id="proposalInfoNumber"></div>
+              <div style="font-weight: 600; margin-bottom: 6px" id="proposalInfoTitle"></div>
+              <div style="color: var(--secondary-text-color); font-size: 0.9rem; margin-bottom: 10px" id="proposalInfoType"></div>
+              <div style="color: var(--secondary-text-color); font-size: 0.9rem; margin-bottom: 10px" id="proposalInfoMeta"></div>
+              <div style="white-space: pre-wrap" id="proposalInfoSummary"></div>
+
+              <div id="proposalInfoFields" style="margin-top: 12px"></div>
+
+              <div id="proposalVoteSection" style="margin-top: 16px; display: none">
+                <div style="font-weight: 600; margin-bottom: 8px">Vote</div>
+                <div class="form-actions" style="gap: 10px">
+                  <button type="button" id="proposalVoteYes" class="btn btn--secondary btn--pill btn--full">Yes</button>
+                  <button type="button" id="proposalVoteNo" class="btn btn--secondary btn--pill btn--full">No</button>
+                </div>
+                <div style="color: var(--secondary-text-color); font-size: 0.9rem; margin-top: 8px" id="proposalVoteCounts"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+      
+      <!-- Settings Modal -->
+      <div class="modal fixed-header" id="settingsModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeSettings"></button>
+          <div class="modal-title">Settings</div>
+          <button class="sign-out-header-button" id="signOutSettingsHeader" data-icon="log-out" title="Sign Out"></button>
+        </div>
+        <div class="modal-content">
+          <ul class="menu-list">
+            <li class="menu-item" id="openCallsModal" data-icon="call">Calls</li>
+            <li class="menu-item" id="openAccountForm" data-icon="user">Profile</li>
+            <li class="menu-item" id="openToll" data-icon="dollar-sign">Toll</li>
+            <li class="menu-item" id="openLockModal" data-icon="lock">Lock</li>
+            <li class="menu-item" id="openSecretModal" data-icon="key">Secret</li>
+            <li class="menu-item" id="openBackupForm" data-icon="download">Backup</li>
+            <li class="menu-item" id="openRemoveAccount" data-icon="trash-2">Remove</li>
+            <li class="menu-item" id="openLaunchUrl" data-icon="launch" style="display: none;">Launch</li>
+            <li class="menu-item sign-out" id="handleSignOutSettings" data-icon="log-out">Sign Out</li>
+          </ul>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Welcome Menu Modal -->
+      <div class="modal fixed-header" id="welcomeMenuModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeWelcomeMenu"></button>
+          <div class="modal-title">Menu</div>
+        </div>
+        <div class="modal-content">
+          <ul class="menu-list">
+            <li class="menu-item" id="welcomeOpenBackup" data-icon="download">Backup</li>
+            <li class="menu-item" id="welcomeOpenRestore" data-icon="rotate-ccw">Restore</li>
+            <li class="menu-item" id="welcomeOpenLockModal" data-icon="lock">Lock</li>
+            <li class="menu-item" id="welcomeOpenRemove" data-icon="trash-2">Remove</li>
+            <li class="menu-item" id="welcomeOpenMigrate" data-icon="shuffle">Migrate</li>
+            <li class="menu-item" id="welcomeOpenLaunch" data-icon="launch" style="display: none;">Launch</li>
+            <li class="menu-item" id="welcomeOpenUpdate" data-icon="smartphone" style="display: none;">Update</li>
+            <li class="menu-item" id="welcomeOpenHelp" data-icon="github">Help</li>
+            <li class="menu-item" id="welcomeOpenAbout" data-icon="info">About</li>
+          </ul>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Help Modal -->
+      <div class="modal fixed-header" id="helpModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeHelpModal"></button>
+          <div class="modal-title">Help</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div style="padding: 1rem">
+              <p>To ask questions please join our Discord server.</p>
+              <div class="form-actions">
+                <button id="joinDiscord" class="btn btn--primary btn--pill btn--full">Join Discord</button>
+              </div>
+            </div>
+            <div style="padding: 1rem">
+              <p>Please contact our team to report bugs or make suggestions.</p>
+              <div class="form-actions">
+                <button id="submitFeedback" class="btn btn--primary btn--pill btn--full">Submit Feedback</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Farm Information Modal -->
+      <div class="modal fixed-header" id="farmModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeFarmModal"></button>
+          <div class="modal-title">Farm</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div style="padding: 1rem">
+              <p>Now you can earn LIB for being a liquidity provider.</p>
+              <div class="form-actions">
+                <button id="continueToFarm" class="btn btn--primary btn--pill btn--full">Continue</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Logs Modal -->
+      <div class="modal fixed-header" id="logsModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeLogsModal"></button>
+          <div class="modal-title">Logs</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div style="padding: 1rem">
+              <textarea id="logsTextarea" placeholder="Logs will appear here..." rows="40" readonly></textarea>
+            </div>
+            <div class="form-actions">
+              <button id="clearLogsButton" class="btn btn--primary btn--pill btn--full">Clear</button>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- About Modal -->
+      <div class="modal fixed-header" id="aboutModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeAboutModal"></button>
+          <div class="modal-title">About Liberdus</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="about-content">
+              <img class="about-logo" src="./media/liberdus_logo_250.png" alt="Liberdus Logo" />
+              <p class="about-description">Liberdus is a decentralized messaging and wallet application.</p>
+
+              <div class="about-info-section">
+                <div class="about-info-item">Version <span id="versionDisplayAbout"></span></div>
+                <div class="about-info-item" id="appVersionAbout" style="display: none;">App Version: <span id="appVersionTextAbout"></span></div>
+                <div class="about-info-item">Network Name: <span id="networkNameAbout"></span></div>
+                <div class="about-info-item">
+                  Net ID:<br />
+                  <span class="about-net-id" id="netIdAbout"></span>
+                </div>
+              </div>
+
+              <div class="about-links-section">
+                <a class="about-link" href="https://liberdus.com" target="_blank">Liberdus.com</a>
+                <a class="about-link" href="#" id="openSourceModal">Source</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Source Modal -->
+      <div class="modal fixed-header" id="sourceModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeSourceModal"></button>
+          <div class="modal-title">Source</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="about-content">
+              <p class="about-description">
+                You can use the links below to view the actual code running on your device. The code is human readable and not minified so it can be audited to ensure that the code on your device is the same as the code in the Github repo.
+              </p>
+
+              <div class="about-links-section">
+                <a class="about-link" href="https://github.com/Liberdus/web-client-v2" target="_blank">GitHub Repo</a>
+              </div>
+
+              <div class="about-source-links">
+                <a class="about-link" href="index.html.txt" target="_blank">index.html</a>
+                <a class="about-link" href="styles.css" target="_blank">styles.css</a>
+                <a class="about-link" href="app.js" target="_blank">app.js</a>
+                <br>
+                <a class="about-link" href="crypto.js" target="_blank">crypto.js</a>
+                <a class="about-link" href="lib.js" target="_blank">lib.js</a>
+                <a class="about-link" href="network.js" target="_blank">network.js</a>
+              </div>
+
+              <div class="about-external-links">
+                <a class="about-link" href="./external/noble-post-quantum.js" target="_blank">noble-post-quantum.js</a>
+                <a class="about-link" href="./external/noble-secp256k1.js" target="_blank">noble-secp256k1.js</a>
+                <a class="about-link" href="./external/noble-ciphers.js" target="_blank">noble-ciphers.js</a>
+                <a class="about-link" href="./external/blake2b.js" target="_blank">blake2b.js</a>
+                <a class="about-link" href="./external/keccak256.js" target="_blank">keccak256.js</a>
+                <a class="about-link" href="./external/stringify-shardus.js" target="_blank">stringify-shardus.js</a>
+                <a class="about-link" href="./external/qr.js" target="_blank">qr.js</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Lock Modal -->
+      <div class="modal fixed-header" id="lockModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeLockModal"></button>
+          <div class="modal-title">Lock</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <p>Setting a password will lock all of your accounts when you sign out. You will need to enter the password to unlock.</p>
+            <p>If you lose your password, you will not be able to access your accounts.</p>
+            <p>If you are sure you want to lock your app, please enter your password below.</p>
+          </div>
+          <div id="lockOptions" class="form-container" style="display:none;">
+            <div class="form-actions">
+              <button id="changePasswordButton" class="btn btn--primary btn--pill btn--full">Change Password</button>
+              <button id="removeLockButton"  class="btn btn--primary btn--pill btn--full">Remove Lock</button>
+            </div>
+          </div>
+          <div id="lockFormContainer" class="form-container">
+            <form id="lockForm" class="form--narrow">
+              <div class="form-group">
+                <!-- old password input default to hidden -->
+                <label for="oldPassword" id="oldPasswordLabel" style="display: none;">Current Password</label>
+                <input type="password" id="oldPassword" class="form-control" style="display: none;" />
+                <!-- new password input -->
+                <label for="newPassword" id="newPasswordLabel">
+                  Password
+                  <span id="passwordWarning" style="color: #dc3545; display: none"></span>
+                </label>
+                <input type="password" id="newPassword" class="form-control" />
+                <!-- confirm new password input -->
+                <label for="confirmNewPassword" id="confirmNewPasswordLabel">Confirm Password</label>
+                <input type="password" id="confirmNewPassword" class="form-control" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full" disabled>Save Password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Unlock Modal -->
+      <div class="modal fixed-header" id="unlockModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeUnlockModal"></button>
+          <div class="modal-title">Unlock</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <form id="unlockForm" class="form--narrow">
+              <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" required />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full" disabled>Unlock</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Sign In Modal -->
+      <div class="modal fixed-header" id="signInModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeSignInModal"></button>
+          <div class="modal-title">Sign In</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <form id="signInForm" class="form--narrow">
+              <div class="form-group">
+                <label for="username"
+                  >Select Account
+                  <span id="usernameNotFound" style="color: #dc3545; display: none; display: inline"></span
+                ></label>
+                <select id="username" class="form-control" required></select>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full" disabled>Sign In</button>
+                <button type="button" id="removeAccountButton" class="btn btn--secondary btn--pill btn--full" style="display: none">
+                  Remove
+                </button>
+              </div>
+            </form>
+            <a class="last-item" href="#" id="signInModalLastItem"> </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Account Modal -->
+      <div class="modal fixed-header" id="createAccountModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeCreateAccountModal"></button>
+          <div class="modal-title">Create Account</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <form id="createAccountForm" class="form--narrow">
+              <div class="form-group">
+                <label for="newUsername">
+                  Username
+                  <span id="newUsernameAvailable" style="color: #28a745; display: none"> available </span>
+                </label>
+                <div style="position: relative">
+                  <input
+                    type="text"
+                    id="newUsername"
+                    class="form-control"
+                    placeholder="Select a username"
+                    required
+                    pattern="[a-zA-Z0-9]*"
+                    inputmode="text"
+                    maxlength="20"
+                  />
+                </div>
+              </div>
+              <div id="privateKeySection" style="display: none">
+                <div class="form-group">
+                  <label for="newPrivateKey"
+                    >Private Key <span id="newPrivateKeyError" style="color: #dc3545; display: none"></span
+                  ></label>
+                  <div style="position: relative">
+                    <input
+                      type="password"
+                      id="newPrivateKey"
+                      class="form-control"
+                      placeholder="Optional private key in hex format"
+                    />
+                    <button type="button" id="togglePrivateKeyVisibility" class="password-toggle-btn"></button>
+                  </div>
+                  <small>
+                    If you want to use an existing private key enter it here. Otherwise you can leave this empty to have a
+                    private key automatically generated.
+                  </small>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full" disabled>Create Account</button>
+              </div>
+              
+              <div class="form-group u-mt-20">
+                <input type="checkbox" id="toggleMoreOptions" />
+                <label for="toggleMoreOptions" style="display: inline; margin-left: 5px">More Options</label>
+              </div>
+              
+              <div id="moreOptionsSection" style="display: none;">
+                <div class="form-group form-group--checkbox">
+                  <input type="checkbox" id="togglePrivateAccount" />
+                  <label for="togglePrivateAccount">
+                    Make this a private account
+                    <span class="toll-info-icon private-account-help" data-icon="info" id="privateAccountHelpButton"></span>
+                  </label>
+                </div>
+                <div class="form-group form-group--checkbox">
+                  <input type="checkbox" id="togglePrivateKeyInput" />
+                  <label for="togglePrivateKeyInput">
+                    Use my own private key (Advanced)
+                  </label>
+                </div>
+              </div>
+            </form>
+            <div class="form-group" id="migrateAccountsSection" style="display: none; margin-top: 50px; padding: 0 16px">
+              <label for="migrateAccountsButton">Check if you have accounts that can be migrated to this network</label>
+              <div class="form-actions">
+                <button type="button" id="migrateAccountsButton" class="btn btn--secondary btn--pill btn--full">
+                  Migrate Accounts
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Update Warning Modal -->
+      <div class="modal fixed-header" id="updateWarningModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeUpdateWarningModal"></button>
+          <div class="modal-title">⚠️ Update Warning</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="warning-content">
+              <p>
+                WARNING: If you accidentally uninstall the app during the update process, all your local data will be permanently lost.
+              </p>
+              <p>
+                <strong>We strongly recommend backing up your data first.</strong>
+              </p>
+            </div>
+            <button id="backupFirstBtn" class="btn btn--primary btn--pill btn--full">
+              🛡️ Backup My Data First
+            </button>
+            <button id="proceedToStoreBtn" class="btn btn--danger btn--pill btn--full">
+              Continue to App Store
+            </button>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Launch Modal -->
+      <div class="modal fixed-header" id="launchModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeLaunchModal"></button>
+          <div class="modal-title">Launch</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <p class="launch-warning">
+              Do not change the Launch URL unless you know what you are doing.
+            </p>
+            
+            <form id="launchForm" class="form--narrow">
+              <div class="form-group">
+                <label for="url">URL</label>
+                <input type="url" id="url" class="form-control" required />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--danger btn--pill btn--full" disabled>Launch</button>
+              </div>
+            </form>
+            <div class="backup-section">
+              <p class="backup-note">
+                Be sure to backup all your accounts first
+              </p>
+              <button type="button" id="launchModalBackupButton" class="btn btn--primary btn--pill btn--full">
+                Backup
+              </button>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- My Info Modal -->
+      <div class="modal fixed-header" id="myInfoModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeMyInfoModal"></button>
+          <div class="modal-title">My Info</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="contact-info-list">
+              <div class="contact-avatar-section">
+                <div class="avatar" id="myInfoAvatar"></div>
+                <div class="name" id="myInfoDisplayName"></div>
+                <div id="myInfoQR" class="myinfo-qr"></div>
+                <div class="myinfo-address-row">
+                  <div
+                    id="myInfoDisplayUsername"
+                    class="form-control address-display myinfo-address-display"
+                    role="button"
+                    tabindex="0"
+                    aria-label="My address"
+                  ></div>
+                  <button
+                    id="myInfoCopyAddress"
+                    class="icon-button address-copy-button"
+                    aria-label="Copy address"
+                  ></button>
+                </div>
+              </div>
+              <!-- My info fields -->
+              <div class="contact-info-item" style="display: block">
+                <div class="contact-info-label">Name</div>
+                <div class="contact-info-value-container">
+                  <div class="contact-info-value" id="myInfoName"></div>
+                  <button class="icon-button edit-icon" id="myInfoEditButton" aria-label="Edit profile"></button>
+                </div>
+              </div>
+              <!-- Email and Phone fields hidden - may want to restore later
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">Email</div>
+                <div class="contact-info-value">
+                  <a href="#" id="myInfoEmail" class="contact-info-link" target="_blank" rel="noopener noreferrer"></a>
+                </div>
+              </div>
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">Phone</div>
+                <div class="contact-info-value" id="myInfoPhone"></div>
+              </div>
+              -->
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">LinkedIn</div>
+                <div class="contact-info-value">
+                  <a href="#" id="myInfoLinkedin" class="contact-info-link" target="_blank" rel="noopener noreferrer"></a>
+                </div>
+              </div>
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">X-Twitter</div>
+                <div class="contact-info-value">
+                  <a href="#" id="myInfoX" class="contact-info-link" target="_blank" rel="noopener noreferrer"></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Account Form Modal -->
+      <div class="modal fixed-header" id="accountModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeAccountForm"></button>
+          <div class="modal-title">My Profile</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="profile-sharing-note">This information is shared with your connections</div>
+            <form id="accountForm" class="form--narrow">
+              <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" class="form-control" required />
+              </div>
+              <!-- Email and Phone fields hidden - may want to restore later
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="tel" id="phone" class="form-control" />
+              </div>
+              -->
+              <div class="form-group">
+                <label for="linkedin">LinkedIn</label>
+                <input type="text" id="linkedin" placeholder="username" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="x">X-Twitter</label>
+                <input type="text" id="x" placeholder="username" class="form-control" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full">Update Profile</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Import Modal -->
+      <div class="modal fixed-header" id="importModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeImportForm"></button>
+          <div class="modal-title">Restore Account</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <form id="importForm" class="form--narrow">
+              <div class="form-group">
+                <label for="restoreSourceLocation">Source Location</label>
+                <select id="restoreSourceLocation" class="form-control">
+                  <option value="local" selected>Local</option>
+                  <option value="google-drive">Google Drive</option>
+                </select>
+              </div>
+              <div class="form-group" id="localFileGroup">
+                <label for="importFile">Select File</label>
+                <input type="file" id="importFile" class="form-control" accept=".json,application/json" />
+              </div>
+              <div class="form-group" id="googleDriveFileGroup" style="display: none;">
+                <label>Google Drive File</label>
+                <button type="button" id="pickGoogleDriveFile" class="btn btn--secondary btn--pill btn--full">Pick File from Google Drive</button>
+                <div id="selectedGoogleDriveFile" class="u-mt-5" style="display: none;">
+                  <span class="selected-file-name"></span>
+                  <button type="button" id="clearGoogleDriveFile" class="btn btn--text">Clear</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="importPassword">
+                  Password
+                  <span id="importPasswordRequired" style="color: var(--danger-color); display: none;">required</span>
+                </label>
+                <input
+                  type="password"
+                  id="importPassword"
+                  class="form-control"
+                  placeholder="Enter password for encrypted files"
+                />
+              </div>
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="overwriteAccountsCheckbox"> 
+                  Overwrite existing accounts from backup file
+                </label>
+              </div>
+
+              <div class="form-group" id="backupAccountLockGroup" style="display: none;">
+                <label for="backupAccountLock">Backup Account Password</label>
+                <input
+                  type="password"
+                  id="backupAccountLock"
+                  class="form-control"
+                  placeholder="Enter password used to lock accounts in backup"
+                />
+              </div>
+              <div class="form-actions">
+                <button type="submit" id="restoreSubmitButton" class="btn btn--primary btn--pill btn--full" disabled>Load Account</button>
+              </div>
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="developerOptionsToggle"> 
+                  Developer Options
+                </label>
+              </div>
+              <!-- Developer options section (initially hidden) -->
+              <div id="developerOptionsSection" class="developer-options" style="display: none;">
+                <div class="form-group">
+                  <label for="oldStringSelect">Old String</label>
+                  <select id="oldStringSelect" class="form-control">
+                    <option value="">Select or enter custom...</option>
+                  </select>
+                  <input type="text" id="oldStringCustom" class="form-control u-mt-5" 
+                        placeholder="Enter custom old string">
+                </div>
+                
+                <div class="form-group">
+                  <label for="newStringSelect">New String</label>
+                  <select id="newStringSelect" class="form-control">
+                    <option value="">Select or enter custom...</option>
+                  </select>
+                  <input type="text" id="newStringCustom" class="form-control u-mt-5" 
+                        placeholder="Enter custom new string">
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Google Drive File Picker Modal -->
+      <div class="modal fixed-header" id="googleDrivePickerModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeGoogleDrivePicker"></button>
+          <div class="modal-title">Select Backup File</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div id="googleDrivePickerLoading" class="empty-state">
+              <div></div>
+              <div>Loading files...</div>
+            </div>
+            <ul class="chat-list" id="googleDriveFileList" style="display: none;">
+              <!-- Files will be populated here -->
+            </ul>
+            <div id="googleDrivePickerEmpty" class="empty-state" style="display: none;">
+              <div></div>
+              <div>No Backup Files Found</div>
+              <div>No backup files were found in your Liberdus Backups folder</div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Calls Modal -->
+      <div class="modal fixed-header" id="callsModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeCallsModal"></button>
+          <div class="modal-title">Calls</div>
+          <div class="current-time" id="callsCurrentTime" aria-label="Current time"></div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <ul class="chat-list" id="callList">
+              <div class="empty-state">
+                <div></div>
+                <div>No Scheduled Calls</div>
+                <div>Scheduled calls will appear here</div>
+              </div>
+            </ul>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Templates for call list items -->
+      <template id="singleCallTemplate">
+        <li class="chat-item" data-index="" data-address="">
+          <div class="chat-avatar"></div>
+          <div class="chat-content">
+            <div class="chat-header">
+              <div class="chat-name"></div>
+              <button class="call-join call-message-phone-button" aria-label="Join Call"></button>
+            </div>
+            <div class="chat-message">
+              <div class="call-time"></div>
+              <span class="chat-time-chevron"></span>
+            </div>
+          </div>
+        </li>
+      </template>
+
+      <template id="groupCallTemplate">
+        <li class="chat-item group-call" data-index="">
+          <div class="chat-avatar call-group-avatars"></div>
+          <div class="chat-content">
+            <div class="chat-header">
+              <div class="chat-name"></div>
+              <button class="call-join call-message-phone-button" aria-label="Join Call"></button>
+            </div>
+            <div class="chat-message">
+              <div class="call-time"></div>
+              <span class="chat-time-chevron"></span>
+            </div>
+          </div>
+        </li>
+      </template>
+
+      <!-- Group Call Participants Modal -->
+      <div class="modal modal-dialog" id="groupCallParticipantsModal">
+        <div class="dialog-box-content">
+          <div class="modal-header">
+            <button class="back-button" id="closeGroupCallParticipantsModal"></button>
+            <div class="modal-title">Call Participants</div>
+          </div>
+          <div class="modal-content">
+            <div class="form-container call-invite-modal-container">
+              <p class="modal-summary">Choose a participant to open their chat.</p>
+              <div class="participants-list" id="groupCallParticipantsList">
+                <!-- Participants will be populated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"></a>
+      </div>
+
+      <!-- Template for participant items -->
+      <template id="groupCallParticipantTemplate">
+        <div class="participant-item" data-address="">
+          <div class="participant-avatar"></div>
+          <div class="participant-info">
+            <div class="participant-name"></div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Chat Modal -->
+      <div class="modal fixed-header" id="chatModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeChatModal"></button>
+          <div class="chat-user-info">
+            <div class="modal-avatar"></div>
+            <div class="modal-title"></div>
+          </div>
+          <!-- Add header actions container -->
+          <div class="header-actions">
+            <button class="icon-button add-friend-icon" id="addFriendButtonChat" aria-label="Add friend"></button>
+            <button class="icon-button menu-icon" id="chatHeaderMenuButton" aria-label="More options"></button>
+          </div>
+        </div>
+        <div class="messages-container">
+          <div class="messages-list"></div>
+        </div>
+        <div class="message-input-container">
+          <div class="message-byte-counter"></div>
+          <!-- Add attachment preview container -->
+          <div class="attachment-preview" id="attachmentPreview" style="display: none;">
+            <!-- Will be populated by JavaScript -->
+          </div>
+          <div class="reply-preview" id="replyPreview" style="display: none;">
+            <div class="reply-preview-content">
+              <div class="reply-preview-label">Replying to:</div>
+              <div class="reply-preview-text"></div>
+            </div>
+            <button class="reply-preview-close" id="replyPreviewClose" aria-label="Cancel reply" type="button"></button>
+          </div>
+          <div class="message-input-row">
+            <button class="icon-button add-attachment-button" id="addAttachmentButton" aria-label="Add attachment"></button>
+            <!-- Cancel Edit button (shown only when editing a message) -->
+            <button class="icon-button cancel-edit-button" id="cancelEditButton" aria-label="Cancel edit" style="display: none;"></button>
+            <div class="message-input-wrapper">
+              <textarea class="message-input" placeholder="Type a message..."></textarea>
+              <div class="toll-container">
+                <span class="toll-label">Toll:</span>
+                <span class="toll-value" id="tollValue"></span>
+                <span class="toll-info-icon" data-icon="info"></span>
+              </div>
+              <button class="icon-button voice-record-button" id="voiceRecordButton" aria-label="Record voice message"></button>
+              <button class="send-button" id="handleSendMessage">
+                <svg viewBox="0 0 24 24">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              </button>
+            </div>
+            <input type="hidden" id="retryOfTxId" />
+            <input type="hidden" id="editOfTxId" />
+            <input type="hidden" id="replyToTxId" />
+            <input type="hidden" id="replyToMessage" />
+            <input type="hidden" id="replyOwnerIsMine" />
+            <!-- Add hidden file inputs for chat attachments -->
+            <input type="file" id="chatFileInput" style="display:none;">
+            <input type="file" id="chatPhotoLibraryInput" accept="image/*" style="display:none;">
+            <input type="file" id="chatFilesInput" style="display:none;">
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Call Schedule Choice Modal -->
+      <div class="modal modal-dialog" id="callScheduleChoiceModal">
+        <div class="dialog-box-content">
+          <div class="modal-header">
+            <button class="back-button" id="closeCallScheduleChoiceModal"></button>
+            <div class="modal-title">Start a Call</div>
+          </div>
+          <div class="modal-content">
+            <div class="form-container call-invite-modal-container">
+              <p class="modal-summary">Choose to call now or schedule a future time.</p>
+              <div class="form--narrow">
+                <div class="form-actions">
+                  <div class="contact-time" id="callScheduleChoiceRecipientTime" aria-label="Recipient current time"></div>
+                  <button type="button" id="callScheduleNowBtn" class="btn btn--primary btn--pill btn--full">Call Now</button>
+                  <button type="button" id="openCallScheduleDateBtn" class="btn btn--primary btn--pill btn--full">Schedule</button>
+                  <button type="button" id="cancelCallScheduleChoice" class="btn btn--secondary btn--pill btn--full">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"></a>
+      </div>
+
+      <!-- Call Schedule Date Modal -->
+      <div class="modal modal-dialog" id="callScheduleDateModal">
+        <div class="dialog-box-content">
+          <div class="modal-header">
+            <button class="back-button" id="closeCallScheduleDateModal"></button>
+            <div class="modal-title">Schedule Call</div>
+            <div class="current-time" id="callScheduleCurrentTime" aria-label="Current time"></div>
+          </div>
+          <div class="modal-content">
+            <div class="form-container call-invite-modal-container">
+              <form id="callScheduleDateForm" class="form--narrow">
+                <div class="form-group">
+                  <label for="callScheduleDate">Select date and time</label>
+                  <div class="call-schedule-form-row">
+                    <input id="callScheduleDate" type="date" class="form-control call-schedule-date-input" />
+                  </div>
+                  <div class="call-schedule-form-row">
+                    <select id="callScheduleHour" class="form-control call-schedule-time-select"></select>
+                    <select id="callScheduleMinute" class="form-control call-schedule-time-select"></select>
+                    <select id="callScheduleAmPm" class="form-control call-schedule-time-select">
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <div class="contact-time" id="callScheduleConvertedTime" aria-label="Recipient time"></div>
+                  <button type="submit" id="confirmCallSchedule" class="btn btn--primary btn--pill btn--full">Submit</button>
+                  <button type="button" id="cancelCallScheduleDate" class="btn btn--secondary btn--pill btn--full">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"></a>
+      </div>
+
+      <!-- Voice Recording Modal -->
+      <div id="voiceRecordingModal" style="display: none;">
+        <div class="voice-recording-content">
+          <div class="voice-recording-header">
+            <h3>Voice Message</h3>
+          </div>
+          <div class="voice-recording-body">
+            <div class="voice-recording-visual">
+              <div class="recording-indicator" id="recordingIndicator">
+                <div class="pulse-ring"></div>
+                <div class="pulse-ring"></div>
+                <div class="microphone-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="recording-timer" id="recordingTimer">00:00</div>
+            </div>
+            
+            <div class="voice-recording-controls">
+              <!-- Initial state: Start and Cancel buttons -->
+              <div class="initial-controls" id="initialControls">
+                <button class="voice-btn voice-btn-secondary" id="cancelRecordingButton">Cancel</button>
+                <button class="voice-btn voice-btn-primary" id="startRecordingButton">Start Recording</button>
+              </div>
+              
+              <!-- Recording state: Stop button -->
+              <div class="recording-controls" id="recordingControls" style="display: none;">
+                <button class="voice-btn voice-btn-danger" id="stopRecordingButton">Stop</button>
+              </div>
+              
+              <!-- Recorded state: Cancel, Listen, and Send buttons -->
+              <div class="recorded-controls" id="recordedControls" style="display: none;">
+                <button class="voice-btn voice-btn-secondary" id="cancelVoiceMessageButton">Cancel</button>
+                <button class="voice-btn voice-btn-secondary" id="listenVoiceMessageButton">Listen</button>
+                <button class="voice-btn voice-btn-primary" id="sendVoiceMessageButton">Send</button>
+              </div>
+              
+              <!-- Listening state: Pause/Resume and Stop buttons -->
+              <div class="listening-controls" id="listeningControls" style="display: none;">
+                <button class="voice-btn voice-btn-secondary" id="pauseResumeButton">Pause</button>
+                <button class="voice-btn voice-btn-primary" id="stopListeningButton">Stop</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Header Context Menu -->
+      <div class="message-context-menu" id="chatHeaderContextMenu" style="display: none;">
+        <div class="context-menu-option" data-action="call" data-icon="call">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Call</span>
+        </div>
+        <div class="context-menu-option" data-action="pay" data-icon="send-money">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Pay</span>
+        </div>
+        <div class="context-menu-option" data-action="info" data-icon="info">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Info</span>
+        </div>
+        <a class="last-item" href="#"></a>
+      </div>
+
+      <!-- Message Context Menu -->
+      <div class="message-context-menu" id="messageContextMenu" style="display: none;">
+        <!-- Voice message specific action: Save -->
+        <div class="context-menu-option" data-action="save" data-icon="download" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Save</span>
+        </div>
+        <div class="context-menu-option" data-action="reply" data-icon="reply">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Reply</span>
+        </div>
+        <div class="context-menu-option" data-action="copy" data-icon="copy">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Copy</span>
+        </div>
+        <!-- Edit own message option (shown only within allowed time window) -->
+        <div class="context-menu-option" data-action="edit" data-icon="edit" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Edit</span>
+        </div>
+        <!-- Call-specific action: Join -->
+        <div class="context-menu-option" data-action="join" data-icon="call" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Join</span>
+        </div>
+        <!-- Call-specific action: Invite -->
+        <div class="context-menu-option" data-action="call-invite" data-icon="call-invite" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Invite</span>
+        </div>
+        <!-- Failed payment specific action: Edit & Resend -->
+        <div class="context-menu-option" data-action="edit-resend" data-icon="retry" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Edit &amp; Resend</span>
+        </div>
+        <div class="context-menu-option" data-action="delete" data-icon="delete">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Delete for me</span>
+        </div>
+        <div class="context-menu-option" data-action="delete-for-all" data-icon="delete" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Delete for all</span>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Image Attachment Context Menu -->
+      <div class="message-context-menu" id="imageAttachmentContextMenu" style="display: none;">
+        <div class="context-menu-option" data-action="import-contacts" data-icon="contacts" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Import Contacts</span>
+        </div>
+        <div class="context-menu-option" data-action="preview" data-icon="eye" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Preview</span>
+        </div>
+        <div class="context-menu-option" data-action="save" data-icon="download">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Save</span>
+        </div>
+        <div class="context-menu-option" data-action="share" data-icon="share">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Share</span>
+        </div>
+        <div class="context-menu-option" data-action="reply" data-icon="reply">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Reply</span>
+        </div>
+        <div class="context-menu-option" data-action="copy" data-icon="copy" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Copy</span>
+        </div>
+        <div class="context-menu-option" data-action="delete" data-icon="delete">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Delete for me</span>
+        </div>
+        <div class="context-menu-option" data-action="delete-for-all" data-icon="delete" style="display: none;">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Delete for all</span>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Attachment Options Context Menu -->
+      <div class="message-context-menu" id="attachmentOptionsContextMenu" style="display: none;">
+        <div class="context-menu-option" data-action="camera" data-icon="camera">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Camera</span>
+        </div>
+        <div class="context-menu-option" data-action="photo-library" data-icon="image">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Photo Library</span>
+        </div>
+        <div class="context-menu-option" data-action="files" data-icon="file">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Files</span>
+        </div>
+        <div class="context-menu-option" data-action="camera-file" data-icon="camera">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Camera/File</span>
+        </div>
+        <div class="context-menu-option" data-action="contacts" data-icon="contacts">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Contacts</span>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Camera Capture Modal -->
+      <div class="camera-capture-overlay" id="cameraCaptureOverlay" style="display: none;" role="dialog" aria-modal="true" aria-label="Camera" tabindex="-1">
+        <div class="camera-capture-dialog" id="cameraCaptureDialog">
+          <video class="camera-capture-video" id="cameraCaptureVideo" playsinline muted autoplay></video>
+          <div class="camera-capture-controls">
+            <button type="button" class="btn btn--secondary btn--pill" id="cameraCancelButton" aria-label="Cancel camera">Cancel</button>
+            <button type="button" class="btn btn--primary btn--pill" id="cameraCaptureButton" aria-label="Capture photo">Capture</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Call Invite Modal -->
+      <div class="modal fixed-header" id="callInviteModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeCallInviteModal"></button>
+          <div class="modal-title">Call Invite</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container call-invite-modal-container">
+            <div class="call-invite-contacts-scroll">
+                <div class="empty-state">
+                  <div></div>
+                  <div>No Contacts Found</div>
+                  <div>Add contacts to invite them to calls</div>
+                </div>
+              <div class="contacts-list" id="callInviteContactsList">
+                <!-- Contacts will be populated here -->
+              </div>
+            </div>
+            <template id="callInviteContactTemplate">
+              <div class="call-invite-contact-row" data-address="">
+                <label class="call-invite-contact-label">
+                  <input type="checkbox" class="call-invite-contact-checkbox" value="" />
+                  <span class="call-invite-contact-name"></span>
+                </label>
+              </div>
+            </template>
+            <div class="call-invite-modal-footer">
+              <div id="callInviteCounter" class="call-invite-counter">0 selected (max 10)</div>
+              <div class="call-invite-footer-actions">
+                <button id="callInviteCancelBtn" class="btn btn--secondary btn--pill">Cancel</button>
+                <button id="callInviteSendBtn" class="btn btn--primary btn--pill">Invite</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Share Attachment Modal -->
+      <div class="modal fixed-header" id="shareAttachmentModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeShareAttachmentModal"></button>
+          <div class="modal-title">Share Attachment</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container call-invite-modal-container">
+            <div class="call-invite-contacts-scroll">
+                <div class="empty-state">
+                  <div></div>
+                  <div>No Contacts Found</div>
+                  <div>Add contacts to share with them</div>
+                </div>
+              <div class="contacts-list" id="shareAttachmentContactsList">
+                <!-- Contacts will be populated here -->
+              </div>
+            </div>
+            <template id="shareAttachmentContactTemplate">
+              <div class="call-invite-contact-row" data-address="">
+                <label class="call-invite-contact-label">
+                  <input type="checkbox" class="call-invite-contact-checkbox" value="" />
+                  <span class="call-invite-contact-name"></span>
+                </label>
+              </div>
+            </template>
+            <div class="call-invite-modal-footer">
+              <div id="shareAttachmentCounter" class="call-invite-counter">0 selected (max 10)</div>
+              <div class="call-invite-footer-actions">
+                <button id="shareAttachmentCancelBtn" class="btn btn--secondary btn--pill">Cancel</button>
+                <button id="shareAttachmentSendBtn" class="btn btn--primary btn--pill">Share</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Import Contacts Modal -->
+      <div class="modal fixed-header" id="importContactsModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeImportContactsModal"></button>
+          <div class="modal-title">Import Contacts</div>
+          <div class="header-actions">
+            <button class="icon-button checkbox-select-all-icon" id="importContactsAllNoneBtn" aria-label="Select all"></button>
+          </div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container share-contacts-modal-container">
+            <div class="share-contacts-scroll">
+              <div class="empty-state" id="importContactsEmptyState" style="display: none;">
+                <div></div>
+                <div>No Contacts to Import</div>
+                <div>The file contains no valid contacts</div>
+                <button class="btn btn--primary btn--pill" id="importContactsActionBtn"></button>
+              </div>
+              <div class="import-contacts-loading" id="importContactsLoading" style="display: none;">
+                <div class="spinner"></div>
+                <div>Loading contacts...</div>
+              </div>
+              <div class="contacts-list" id="importContactsList">
+                <!-- Contacts will be populated here -->
+              </div>
+            </div>
+            <div class="share-contacts-modal-footer">
+              <button class="btn btn--primary btn--pill" id="importContactsDoneBtn">Done</button>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Share Contacts Modal -->
+      <div class="modal fixed-header" id="shareContactsModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeShareContactsModal"></button>
+          <div class="modal-title">Contacts to share</div>
+          <div class="header-actions">
+            <button class="icon-button checkbox-select-all-icon" id="shareContactsAllNoneBtn" aria-label="Select all"></button>
+          </div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container share-contacts-modal-container">
+            <div class="share-contacts-scroll">
+              <div class="empty-state" id="shareContactsEmptyState" style="display: none;">
+                <div></div>
+                <div>No Contacts to Share</div>
+                <div>Add friends or connections first</div>
+                <button class="btn btn--primary btn--pill" id="shareContactsActionBtn"></button>
+              </div>
+              <div class="contacts-list" id="shareContactsList">
+                <!-- Contacts will be populated here -->
+              </div>
+            </div>
+            <div class="share-contacts-modal-footer">
+              <button class="btn btn--primary btn--pill" id="shareContactsDoneBtn">Done</button>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Template for toll info message -->
+      <template id="tollInfoMessageTemplate">
+        <div class="toll-info-message">
+          <h4>What is a Toll?</h4>
+          <p>A toll is a payment included with messages to prevent spam and make it worthwhile for the recipient to read and reply back to you</p>
+          
+          <h5>How it works:</h5>
+          <ul>
+            <li>If the toll line is green, you don't need to pay the toll</li>
+            <li>The recipient sets the toll amount</li>
+            <li>No toll required if the recipent has set you as a connection</li>
+            <li>Half the toll is given to the recipient if they read your message</li>
+            <li>Half the toll is given to the recipient if they reply to your message</li>
+            <li>Any toll that was not given to the recipient can be reclaimed</li>
+            <li>To reclaim the toll you must not send more messages to the recipient for 7 days</li>
+            <li>After 7 days just open and close the chat session with the recipient to reclaim any remaining toll</li>
+          </ul>
+        </div>
+      </template>
+
+      <!-- Template for private account help message -->
+      <template id="privateAccountHelpMessageTemplate">
+        <div class="toll-info-message">
+          <h4>What is a Private Account?</h4>
+          <p>A private account restricts communication and payments to only other private accounts.</p>
+          
+          <h5>Important:</h5>
+          <ul>
+            <li>Private account username should be obscure and not connected to you</li>
+            <li>Username of a private account should not be shared publicly and only shared through a direct message</li>
+            <li>Public accounts cannot interact with private accounts</li>
+            <li>This setting cannot be changed after account creation</li>
+            <li>Private accounts allow to communicate without exposing metadata</li>
+          </ul>
+        </div>
+      </template>
+
+      <!-- Failed Message Context Menu -->
+      <div class="failed-message-context-menu" id="failedMessageContextMenu" style="display: none;">
+        <div class="context-menu-option" data-action="retry" data-icon="retry">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Retry</span>
+        </div>
+        <div class="context-menu-option" data-action="delete" data-icon="delete">
+          <span class="context-menu-icon"></span>
+          <span class="context-menu-text">Delete for me</span>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+      
+      <!-- Contact Info Modal -->
+      <div class="modal fixed-header" id="contactInfoModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeContactInfoModal"></button>
+          <div class="modal-title">Contact Info</div>
+          <!-- Add header actions container -->
+          <div class="header-actions">
+            <button class="icon-button chat-icon" id="contactInfoChatButton" aria-label="Open chat"></button>
+            <button class="icon-button send-money-icon" id="contactInfoSendButton" aria-label="Send money"></button>
+            <button
+              class="icon-button add-friend-icon"
+              id="addFriendButtonContactInfo"
+              aria-label="Add friend"
+            ></button>
+          </div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="contact-info-list">
+              <div class="contact-avatar-section">
+                <div class="avatar" id="contactInfoAvatar"></div>
+                <div class="name"></div>
+                <div class="address-container">
+                  <div id="contactInfoDisplayAddress" class="subtitle"></div>
+                  <button
+                    id="contactInfoCopyAddress"
+                    class="icon-button address-copy-button"
+                    aria-label="Copy address"
+                  ></button>
+                </div>
+              </div>
+              <!-- Template for contact info items -->
+              <template id="contactInfoItemTemplate">
+                <div class="contact-info-item">
+                  <div class="contact-info-label"></div>
+                  <div class="contact-info-value"></div>
+                </div>
+              </template>
+              <!-- Contact info fields -->
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">Username</div>
+                <div class="contact-info-value" id="contactInfoUsername"></div>
+              </div>
+              <div class="contact-info-item">
+                <div class="contact-info-label">Name</div>
+                <div class="contact-info-value-container">
+                  <div class="contact-info-value" id="contactInfoName"></div>
+                  <button class="icon-button edit-icon" id="nameEditButton" aria-label="Edit name"></button>
+                </div>
+              </div>
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">Provided Name</div>
+                <div class="contact-info-value" id="contactInfoProvidedName"></div>
+              </div>
+              <!-- Email and Phone fields hidden - may want to restore later
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">Email</div>
+                <div class="contact-info-value">
+                  <a href="#" id="contactInfoEmail" class="contact-info-link" target="_blank" rel="noopener noreferrer"></a>
+                </div>
+              </div>
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">Phone</div>
+                <div class="contact-info-value" id="contactInfoPhone"></div>
+              </div>
+              -->
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">LinkedIn</div>
+                <div class="contact-info-value">
+                  <a href="#" id="contactInfoLinkedin" class="contact-info-link" target="_blank" rel="noopener noreferrer"></a>
+                </div>
+              </div>
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">X-Twitter</div>
+                <div class="contact-info-value">
+                  <a href="#" id="contactInfoX" class="contact-info-link" target="_blank" rel="noopener noreferrer"></a>
+                </div>
+              </div>
+              <div class="contact-info-item">
+                <div class="contact-info-label">Notes</div>
+                <div class="contact-info-value-container">
+                  <div class="contact-info-value" id="contactInfoNotes"></div>
+                  <button class="icon-button edit-icon" id="notesEditButton" aria-label="Edit notes"></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Friend Modal -->
+      <div class="modal fixed-header" id="friendModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeFriendModal"></button>
+          <div class="modal-title">Contact Status</div>
+        </div>
+        <div class="modal-content">
+          <form id="friendForm" class="form--narrow">
+            <div class="radio-group">
+              <label class="radio-option status-2">
+                <input type="radio" name="friendStatus" value="2" checked />
+                <div class="radio-content">
+                  <span class="radio-label">Connection</span>
+                  <span class="radio-description">Share my profile info and no toll required</span>
+                </div>
+              </label>
+              <label class="radio-option status-1">
+                <input type="radio" name="friendStatus" value="1" />
+                <div class="radio-content">
+                  <span class="radio-label">Tolled</span>
+                  <span class="radio-description">Toll required to send me messages</span>
+                </div>
+              </label>
+              <label class="radio-option status-0">
+                <input type="radio" name="friendStatus" value="0" />
+                <div class="radio-content">
+                  <span class="radio-label">Blocked</span>
+                  <span class="radio-description">Cannot send me messages</span>
+                </div>
+              </label>
+            </div>
+          <div class="form-actions">
+            <button id="friendSubmitButton" type="submit" class="btn btn--primary btn--pill btn--full">Update</button>
+          </div>
+          </form>
+          <a class="last-item" href="#"></a>
+        </div>
+      </div>
+
+      <!-- Receive Modal -->
+      <div class="modal fixed-header" id="receiveModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeReceiveModal"></button>
+          <div class="modal-title">Receive</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="form-group">
+              <label>Your Address</label>
+              <div class="address-container">
+                <div
+                  id="displayAddress"
+                  class="form-control address-display"
+                ></div>
+                <button
+                  id="copyAddress"
+                  class="icon-button address-copy-button"
+                ></button>
+              </div>
+              <div id="qrcode"></div>
+
+              <!-- QR Code Preview (Moved here) -->
+              <div id="qrDataPreview" class="form-control qr-data-preview" style="display: none">
+                <!-- Error messages will be placed here directly by JS -->
+              </div>
+            </div>
+
+            <!-- Payment Request Options (New) -->
+            <div class="form-group">
+              <label for="receiveAsset">Asset</label>
+              <select id="receiveAsset" class="form-control">
+                <!-- Will be populated with assets in JavaScript -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="receiveAmount">Amount (Optional)</label>
+              <div class="amount-container">
+                <input
+                  inputmode="decimal"
+                  type="text"
+                  id="receiveAmount"
+                  class="form-control"
+                  placeholder="Enter amount"
+                  step="any"
+                  min="0"
+                />
+                <button id="toggleReceiveBalance" class="toggle-balance">
+                  <span id="receiveBalanceSymbol">LIB</span>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="receiveMemo">Memo (Optional)</label>
+              <textarea
+                id="receiveMemo"
+                class="form-control"
+                placeholder="Add a note for the payment"
+                maxlength="300"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- History Modal -->
+      <div class="modal fixed-header" id="historyModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeHistoryModal"></button>
+          <div class="modal-title">Transaction History</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="form-group">
+              <label for="historyAsset">Asset</label>
+              <select id="historyAsset" class="form-control"></select>
+            </div>
+            <div class="transaction-list" id="transactionList">
+              <div class="empty-state">
+                <div></div>
+                <div>No Transactions</div>
+                <div>Your transaction history will appear here</div>
+              </div>
+              <!-- Transactions will be populated here -->
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Send Asset Form Modal -->
+      <div class="modal fixed-header" id="sendAssetFormModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeSendAssetFormModal"></button>
+          <div class="modal-title">Send</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <form id="sendForm" class="form--narrow">
+              <div class="form-group">
+                <label for="sendAsset">Asset</label>
+                <select id="sendAsset" class="form-control" required></select>
+              </div>
+              <div class="form-group">
+                <label for="sendToAddress"
+                  >Recipient <span id="sendToAddressError" style="color: #dc3545; display: none"></span
+                ></label>
+                <div style="display: flex; align-items: center; gap: 0.5rem">
+                  <input
+                    type="text"
+                    id="sendToAddress"
+                    class="form-control"
+                    placeholder="Enter username"
+                    required
+                    pattern="[a-zA-Z0-9]*"
+                    inputmode="text"
+                    style="flex: 1"
+                  />
+                  <button
+                    type="button"
+                    id="uploadQRButton"
+                    class="icon-button"
+                    title="Upload QR Code"
+                    style="flex-shrink: 0"
+                  >
+                    <svg viewBox="0 0 24 24" width="24" height="24" style="fill: #007bff">
+                      <path
+                        d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3v2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z"
+                      />
+                    </svg>
+                  </button>
+                  <button type="button" id="scanQRButton" class="icon-button" title="Scan QR Code" style="flex-shrink: 0">
+                    <svg viewBox="0 0 24 24" width="24" height="24" style="fill: #007bff">
+                      <path
+                        d="M3,3 L10,3 L10,10 L3,10 Z M5,5 L5,8 L8,8 L8,5 Z M14,3 L21,3 L21,10 L14,10 Z M16,5 L16,8 L19,8 L19,5 Z M3,14 L10,14 L10,21 L3,21 Z M5,16 L5,19 L8,19 L8,16 Z M14,14 L21,14 L21,21 L14,21 Z M16,16 L16,19 L19,19 L19,16 Z M11,3 L13,3 L13,10 L11,10 Z M11,14 L13,14 L13,21 L11,21 Z M3,11 L10,11 L10,13 L3,13 Z M14,11 L21,11 L21,13 L14,13 Z"
+                      />
+                    </svg>
+                  </button>
+                  <!-- File input for QR code upload -->
+                  <input
+                    type="file"
+                    id="qrFileInput"
+                    accept="image/*"
+                    style="display: none; position: absolute; width: 1px; height: 1px; overflow: hidden"
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="sendAmount">
+                  Amount <span id="balanceWarning" class="balance-warning"></span>
+                </label>
+                <div class="amount-container">
+                  <input
+                    inputmode="decimal" 
+                    type="text"
+                    id="sendAmount"
+                    class="form-control"
+                    required
+                  />
+                  <!-- add button to toggle between LIB and USD -->
+                  <button id="toggleBalance" class="toggle-balance">
+                    <span id="balanceSymbol">LIB</span>
+                  </button>
+                </div>
+                <div id="availableBalance" class="available-balance">
+                  <div class="balance-info">
+                    <span>Available: <span id="balanceAmount">0.00 LIB</span></span>
+                    <span class="fee-info">Fee: <span id="transactionFee">0.00 LIB</span></span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="sendMemo">
+                  Memo (Optional)
+                  <span class="memo-byte-counter" style="font-size: 12px; margin-left: 8px; font-weight: normal; display: none;"></span>
+                </label>
+                <textarea id="sendMemo" class="form-control"></textarea>
+                <div class="toll-container" id="memoTollContainer">
+                  <span class="toll-memo" id="tollMemo"></span>
+                </div>
+              </div>
+              <input type="hidden" id="retryOfPaymentTxId" />
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full">Send</button>
+              </div>
+            </form>
+
+            <!-- QR Scan Container -->
+            <div id="qrScannerContainer" class="qr-scanner-container" style="display: none">
+              <video id="qrVideo" playsinline autoplay></video>
+              <div class="scanner-overlay">
+                <div class="scanner-guide"></div>
+              </div>
+              <div class="scanner-controls">
+                <button id="closeScanner" class="scanner-button">Cancel</button>
+                <button id="switchCamera" class="scanner-button">Switch Camera</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Send Asset Confirmation Modal -->
+      <div class="modal fixed-header" id="sendAssetConfirmModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeSendAssetConfirmModal"></button>
+          <div class="modal-title">Confirm Transaction</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="confirmation-details">
+              <div class="form-group">
+                <label>Recipient</label>
+                <div id="confirmRecipient" class="confirm-value"></div>
+              </div>
+              <div class="form-group">
+                <label>Amount</label>
+                <div id="confirmAmount" class="confirm-value"></div>
+                <div id="confirmAmountUSD" class="confirm-value-secondary usd-equivalent"></div>
+              </div>
+              <div class="form-group">
+                <label>Asset</label>
+                <div id="confirmAsset" class="confirm-value"></div>
+              </div>
+              <div class="form-group" id="confirmMemoGroup" style="display: none">
+                <label>Memo</label>
+                <div id="confirmMemo" class="confirm-value"></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button id="confirmSendButton" class="btn btn--primary btn--pill btn--full">Confirm Send</button>
+              <button id="cancelSendButton" class="btn btn--danger btn--pill btn--full">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Remove Account Modal -->
+      <div class="modal fixed-header" id="removeAccountModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeRemoveAccountModal"></button>
+          <div class="modal-title">Remove Account</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="modal-content-wrapper">
+              <div class="modal-text-content">
+                <h3 class="modal-heading">
+                  Please backup your account before removing it.
+                </h3>
+                <p>
+                  This only removes the account from this device, not from the network.
+                </p>
+                <p>
+                  You can restore and use your account again anytime with the backup file.
+                </p>
+              </div>
+              <div class="form-actions">
+                <button id="openBackupFromRemove" class="btn btn--primary btn--pill btn--full">Backup Account</button>
+                <button id="confirmRemoveAccount" class="btn btn--danger btn--pill btn--full">Remove Account</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Remove Accounts Modal (multi select) -->
+      <div class="modal fixed-header" id="removeAccountsModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeRemoveAccountsModal"></button>
+          <div class="modal-title">Remove Accounts</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <p class="modal-summary">Select accounts to remove from this device.</p>
+            <div id="removeAccountsList" class="account-list"></div>
+            <button type="button" id="submitRemoveAccounts" class="btn btn--primary btn--pill btn--full" disabled>Remove Selected</button>
+            <button type="button" id="removeAllAccountsButton" class="btn btn--danger btn--pill btn--full">Remove All Accounts</button>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Secret Modal -->
+      <div class="modal fixed-header" id="secretModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeSecretModal"></button>
+          <div class="modal-title">Secret Key</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="form-group">
+              <p>
+                <strong>Warning:</strong> Keep your secret key private. Anyone with access to it can control your account.
+              </p>
+              <button id="showSecretButton" class="btn btn--primary btn--pill btn--full">Show</button>
+            </div>
+            <div id="secretContent">
+              <div class="form-group">
+                <label for="secretHexDisplay">Secret Key (Hex)</label>
+                <div>
+                  <div
+                    id="secretHexDisplay"
+                    class="form-control"
+                  ></div>
+                  <button
+                    type="button"
+                    id="copySecretButton"
+                    class="icon-button"
+                    title="Copy to Clipboard"
+                  ></button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>QR Code</label>
+                <div id="secretQRCode"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Backup Modal -->
+      <div class="modal fixed-header" id="backupModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeBackupForm"></button>
+          <div class="modal-title">Backup Account</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <!-- have description of what this is -->
+            <p>
+              This will save a file that contains your account data. You can use this file to restore your account on another device.
+            </p>
+            <p>
+              If you are signed in you can choose to backup all accounts or just the signed in account. If you are not signed in, this will save all accounts.
+            </p>
+            <form id="backupForm" class="form--narrow">
+              <div class="form-group" id="backupAllAccountsGroup" style="display: none;">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="backupAllAccounts" />
+                  <span class="checkmark"></span>
+                  Backup all accounts
+                </label>
+              </div>
+              <div class="form-group">
+                <label for="backupStorageLocation">Storage Location</label>
+                <select id="backupStorageLocation" class="form-control">
+                  <option value="local" selected>Local</option>
+                  <option value="google-drive">Google Drive</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="backupPassword">
+                  Password
+                  <span id="backupPasswordWarning" style="color: #dc3545; display: none">too short</span>
+                  <span id="backupPasswordRequired" style="color: #dc3545; display: none">required</span>
+                </label>
+                <input
+                  type="password"
+                  id="backupPassword"
+                  class="form-control"
+                  placeholder="Leave empty for unencrypted backup"
+                />
+              </div>
+              <div class="form-group">
+                <label for="backupPasswordConfirm">
+                  Confirm Password
+                  <span id="backupPasswordConfirmWarning" style="color: #dc3545; display: none">passwords don't match</span>
+                </label>
+                <input
+                  type="password"
+                  id="backupPasswordConfirm"
+                  class="form-control"
+                  placeholder="Confirm your password"
+                />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full">Save Data</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Add search modal before the other modals -->
+      <div class="modal search-modal" id="searchModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeSearchModal"></button>
+          <div class="modal-title">Search Messages</div>
+        </div>
+        <div class="modal-content">
+          <div class="search-bar-container">
+            <div class="search-bar">
+              <span class="search-icon"></span>
+              <input
+                type="text"
+                id="messageSearch"
+                class="search-input"
+                placeholder="Search messages..."
+                autocomplete="off"
+                autofocus
+                maxlength="30"
+              />
+            </div>
+          </div>
+          <div class="form-container">
+            <div id="searchResults" class="chat-list">
+              <!-- Results will be populated here -->
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Add new contact search modal before closing body tag -->
+      <div class="modal search-modal" id="contactSearchModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeContactSearchModal"></button>
+          <div class="modal-title">Search Contacts</div>
+        </div>
+        <div class="modal-content">
+          <div class="search-bar-container">
+            <div class="search-bar">
+              <span class="search-icon"></span>
+              <input
+                type="text"
+                id="contactSearch"
+                class="search-input"
+                placeholder="Search contacts..."
+                autocomplete="off"
+                autofocus
+                maxlength="30"
+              />
+            </div>
+          </div>
+          <div class="form-container">
+            
+            <div id="contactSearchResults" class="chat-list">
+              <!-- Contact search results will be populated here -->
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Edit Contact Modal -->
+      <div class="modal fixed-header" id="editContactModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeEditContactModal"></button>
+          <div class="modal-title">Edit Contact</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="contact-info-list">
+              <div class="contact-avatar-section">
+                <div class="avatar"></div>
+                <div class="name"></div>
+                <div class="subtitle"></div>
+              </div>
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">Username</div>
+                <div class="contact-info-value" id="editContactUsername"></div>
+              </div>
+              <div class="contact-info-item">
+                <div class="contact-info-label">Name</div>
+                <div class="contact-info-value-container">
+                  <div class="contact-info-value editing">
+                    <input
+                      type="text"
+                      class="edit-field-input"
+                      id="editContactNameInput"
+                      placeholder="Enter contact name"
+                    />
+                    <button class="field-action-button clear" id="nameClearButton" aria-label="Clear"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="contact-info-item" id="editContactProvidedNameContainer" style="display: none">
+                <div class="contact-info-label">Provided Name</div>
+                <div class="contact-info-value" id="editContactProvidedName"></div>
+              </div>
+              <!-- Email and Phone fields hidden - may want to restore later
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">Email</div>
+                <div class="contact-info-value" id="editContactEmail"></div>
+              </div>
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">Phone</div>
+                <div class="contact-info-value" id="editContactPhone"></div>
+              </div>
+              -->
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">LinkedIn</div>
+                <div class="contact-info-value" id="editContactLinkedin"></div>
+              </div>
+              <div class="contact-info-item" style="display: none">
+                <div class="contact-info-label">X-Twitter</div>
+                <div class="contact-info-value" id="editContactX"></div>
+              </div>
+              <div class="contact-info-item">
+                <div class="contact-info-label">Notes</div>
+                <div class="contact-info-value-container">
+                  <div class="contact-info-value editing">
+                    <textarea id="editContactNotesInput" class="form-control" rows="4" placeholder="Enter notes about this contact" maxlength="1000"></textarea>
+                    <button class="field-action-button clear" id="notesClearButton" aria-label="Clear"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-actions" style="padding: 1rem;">
+                <button id="saveEditContactButton" class="btn btn--primary btn--pill btn--full">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Avatar Edit Modal -->
+      <div class="modal fixed-header" id="avatarEditModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeAvatarEditModal"></button>
+          <div class="modal-title">Edit Photo</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <div class="avatar-edit-preview">
+              <div class="avatar-edit-square" id="avatarEditSquare">
+                <div class="avatar-edit-circle" id="avatarEditPreview"></div>
+              </div>
+            </div>
+            <div class="avatar-edit-controls">
+              <label for="avatarZoomRange">Zoom</label>
+              <input type="range" id="avatarZoomRange" min="1" max="3" step="0.01" value="1" />
+            </div>
+            <div class="avatar-edit-actions">
+              <input type="file" id="avatarEditFileInput" accept="image/*" style="display:none" />
+              <button class="primary-button" id="avatarEditUploadButton">Upload</button>
+              <button class="secondary-button danger-button" id="avatarEditDeleteButton">Delete</button>
+              <button class="btn btn--primary" id="avatarEditSaveButton" style="display: none;">Save</button>
+              <button class="btn btn--secondary btn--danger" id="avatarEditCancelButton" style="display: none;">Cancel</button>
+            </div>
+            <!-- Avatar selection options: contact-sent, mine (local), identicon -->
+            <div class="avatar-options" id="avatarOptionsContainer">
+              <div class="avatar-options-label">Choose avatar to use:</div>
+              <div class="avatar-options-list">
+                <div class="avatar-option" data-value="mine" id="avatarOptionUploaded">
+                  <div class="avatar-thumb" id="avatarThumbUploaded"></div>
+                  <div class="avatar-option-label">Mine</div>
+                </div>
+                <div class="avatar-option" data-value="contact" id="avatarOptionContact">
+                  <div class="avatar-thumb" id="avatarThumbContact"></div>
+                  <div class="avatar-option-label">Contact</div>
+                </div>
+                <div class="avatar-option" data-value="identicon" id="avatarOptionIdenticon">
+                  <div class="avatar-thumb" id="avatarThumbIdenticon"></div>
+                  <div class="avatar-option-label">Identicon</div>
+                </div>
+              </div>
+            </div>
+            <div class="avatar-options-actions" id="avatarOptionsActions">
+              <button class="btn btn--primary" id="avatarUseButton" disabled>Use</button>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Validator Modal -->
+      <div class="modal fixed-header" id="validatorModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeValidatorModal"></button>
+          <div class="modal-title">Validator Staking</div>
+        </div>
+        <div class="modal-content">
+          <!-- Loading State -->
+          <div id="validator-loading" style="text-align: center; padding: 1rem; display: none">
+            <div class="spinner"></div>
+            <!-- Add spinner styles if needed -->
+            Loading validator details...
+          </div>
+
+          <!-- Error Message Area -->
+          <div
+            id="validator-error-message"
+            class="error-message"
+            style="display: none; padding: 1rem; color: #dc3545; text-align: center"
+          >
+            <!-- Error text will be populated here -->
+          </div>
+
+          <!-- Validator Details Display Area -->
+          <div id="validator-details" class="validator-info-container" style="display: block">
+            <!-- No Validator Message - shown when no nominee exists -->
+            <div id="validator-earn-message" style="display: none; margin-bottom: 20px;">
+              <div class="action-item">
+                <p class="action-description" style="margin-bottom: 10px;">Now you can earn LIB for running a validator node.</p>
+            <button id="validator-learn-more" class="btn btn--primary btn--pill btn--full">Learn More</button>
+              </div>
+            </div>
+            
+            <!-- Your Stake Info - only shown when a nominee exists -->
+            <div id="validator-stake-info" class="info-section">
+              <h4>Your Stake Info</h4>
+              <!-- New Skeleton Bars for Pending Nominee Info -->
+              <div
+                class="skeleton-item"
+                id="pending-nominee-skeleton-1"
+                style="
+                  display: none;
+                  height: 22px;
+                  width: 100%;
+                  margin-top: 4px;
+                  margin-bottom: 8px;
+                  background-color: #e0e0e0;
+                  padding: 0 5px;
+                  box-sizing: border-box;
+                "
+              >
+                <span
+                  id="pending-tx-text-in-bar"
+                  style="
+                    display: none;
+                    font-size: 0.75em;
+                    color: #333;
+                    line-height: 22px;
+                    width: 100%;
+                    text-align: center;
+                  "
+                ></span>
+              </div>
+              <div class="info-item vertical-layout">
+                <span class="info-label" id="validator-nominee-label">Nominated Validator:</span>
+                <span class="info-value code" id="validator-nominee"></span>
+              </div>
+              <div class="info-item" id="validator-user-stake-lib-item">
+                <span class="info-label">Staked Amount (LIB):</span>
+                <span class="info-value" id="validator-user-stake-lib"></span>
+              </div>
+              <div class="info-item" id="validator-user-stake-usd-item">
+                <span class="info-label">Staked Amount (USD):</span>
+                <span class="info-value" id="validator-user-stake-usd"></span>
+              </div>
+              <div class="info-item" id="validator-rewards-item">
+                <span class="info-label">Estimated Rewards:</span>
+                <span class="info-value" id="validator-rewards-estimate">N/A</span>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <h4>Network Staking Info</h4>
+              <div class="info-item">
+                <span class="info-label">Min Stake Required (USD):</span>
+                <span class="info-value" id="validator-network-stake-usd"></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Min Stake Required (LIB):</span>
+                <span class="info-value" id="validator-network-stake-lib"></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Stability Factor (USD/LIB):</span>
+                <span class="info-value" id="validator-stability-factor"></span>
+              </div>
+              <div class="info-item" style="display: none">
+                <span class="info-label">Market Price (USD/LIB):</span>
+                <span class="info-value" id="validator-market-price"></span>
+              </div>
+              <div class="info-item" style="display: none">
+                <span class="info-label">Min Stake at Market (USD):</span>
+                <span class="info-value" id="validator-market-stake-usd"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-item">
+            <button id="openStakeModal" class="btn btn--primary btn--pill btn--full">Stake</button>
+            <p class="action-description">Delegate LIB to a validator node to earn rewards.</p>
+          </div>
+
+          <div class="action-item">
+            <button id="submitUnstake" class="btn btn--danger btn--pill btn--full">Unstake</button>
+            <div id="unstake-lock-info" class="unstake-lock-info" aria-live="polite"></div>
+            <p class="action-description">Withdraw your delegated LIB from a validator node.</p>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Toll Modal -->
+      <div class="modal fixed-header" id="tollModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeTollModal"></button>
+          <div class="modal-title">Toll Settings</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <!-- Current Toll Amount Display Area - Moved outside the form -->
+            <div class="toll-display-area">
+              <label for="currentTollValue">Current Toll Amount</label>
+              <div class="form-text help-text">
+                This is the toll amount a sender must pay to send a message or payment to you.
+              </div>
+              <div id="tollAmountUSD" class="current-toll-value-box">
+                <span id="tollAmountUSD">N/A USD</span>
+              </div>
+            </div>
+
+            <form id="tollForm" class="form--narrow">
+              <div class="form-group">
+                <label for="newTollAmountInput">Set New Toll Amount</label>
+                <div class="form-text help-text">
+                  Enter the toll in USD. You will be paid in LIB at market rate equivalent to the USD amount you enter. Set to 0 for no toll, otherwise enter an amount at least the minimum toll shown below.
+                </div>
+                <div class="amount-container">
+                  <input
+                    inputmode="decimal"
+                    type="text"
+                    id="newTollAmountInput"
+                    class="form-control"
+                    placeholder="Enter new amount"
+                    required
+                  />
+                  <!-- Static currency label (USD) -->
+                  <span id="tollCurrencySymbol" class="usd-amount" style="pointer-events: none;">USD</span>
+                </div>
+                <div id="equivalentLibDisplay" class="help-text" style="min-height: 15px;"></div>
+                <div id="minTollDisplay" class="help-text">Minimum toll: Loading...</div>
+                <div id="tollWarningMessage" class="warning-text"></div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" id="saveNewTollButton" class="btn btn--primary btn--pill btn--full">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Stake Modal -->
+      <div class="modal fixed-header" id="stakeModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeStakeModal"></button>
+          <div class="modal-title">Stake Validator</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <form id="stakeForm" class="form--narrow">
+              <div class="form-group" id="stakeNodeAddressGroup">
+                <label for="stakeNodeAddress">
+                  Validator Node Address <span id="stakeNodeAddressWarning" class="validation-warning" style="display: none"></span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 0.5rem">
+                  <input
+                    type="text"
+                    id="stakeNodeAddress"
+                    class="form-control"
+                    required
+                    placeholder="Enter node address"
+                    style="flex: 1"
+                  />
+                  <button
+                    type="button"
+                    id="uploadStakeQRButton"
+                    class="icon-button"
+                    title="Upload Stake Address QR"
+                    style="flex-shrink: 0"
+                  >
+                    <svg viewBox="0 0 24 24" width="24" height="24" style="fill: #007bff">
+                      <path
+                        d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3v2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    id="scanStakeQRButton"
+                    class="icon-button"
+                    title="Scan Stake Address QR"
+                    style="flex-shrink: 0"
+                  >
+                    <svg viewBox="0 0 24 24" width="24" height="24" style="fill: #007bff">
+                      <path
+                        d="M3,3 L10,3 L10,10 L3,10 Z M5,5 L5,8 L8,8 L8,5 Z M14,3 L21,3 L21,10 L14,10 Z M16,5 L16,8 L19,8 L19,5 Z M3,14 L10,14 L10,21 L3,21 Z M5,16 L5,19 L8,19 L8,16 Z M14,14 L21,14 L21,21 L14,21 Z M16,16 L16,19 L19,19 L19,16 Z M11,3 L13,3 L13,10 L11,10 Z M11,14 L13,14 L13,21 L11,21 Z M3,11 L10,11 L10,13 L3,13 Z M14,11 L21,11 L21,13 L14,13 Z"
+                      />
+                    </svg>
+                  </button>
+                  <!-- File input for Stake QR code upload -->
+                  <input
+                    type="file"
+                    id="stakeQrFileInput"
+                    accept="image/*"
+                    style="display: none; position: absolute; width: 1px; height: 1px; overflow: hidden"
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="stakeAmount">
+                  Stake Amount <span id="stakeAmountWarning" class="validation-warning" style="display: none"></span>
+                </label>
+                <div id="stakeAvailableBalanceDisplay" class="available-balance-display">
+                  <div class="balance-info">
+                    <span>Available: <span id="stakeBalanceAmount">0.00 LIB</span></span>
+                    <span class="fee-info">Fee: <span id="stakeTransactionFee">0.00 LIB</span></span>
+                  </div>
+                </div>
+                <input
+                  inputmode="decimal"
+                  type="text"
+                  id="stakeAmount"
+                  class="form-control"
+                  required
+                  placeholder="Enter amount to stake"
+                />
+              </div>
+              <div class="form-actions">
+                <button type="submit" id="submitStake" class="btn btn--primary btn--pill btn--full">Submit Stake</button>
+                <button type="button" id="faucetButton" class="btn btn--secondary btn--pill btn--full" disabled>Claim LIB</button>
+                <p class="action-description">You can claim LIB tokens from the faucet to stake your node.</p>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- QR Scan Modal -->
+      <div class="modal fixed-header" id="qrScanModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeQRScanModal"></button>
+          <div class="modal-title">Scan QR</div>
+        </div>
+        <div class="scanner-container">
+          <p id="scan-waiting" class="status"></p>
+          <video id="video"></video>
+          <div class="scan-region-highlight"></div>
+          <canvas id="canvas"></canvas>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Failed Transaction Modal -->
+      <div class="modal modal-dialog" id="failedTransactionModal">
+        <div class="dialog-box-content">
+          <div class="modal-header">
+            <button class="back-button" id="closeFailedTransactionModal"></button>
+            <div class="modal-title">Failed Transaction</div>
+          </div>
+          <div class="modal-content">
+            <div class="form-container">
+              <div class="modal-actions">
+                <button type="button" class="btn btn--danger btn--pill btn--full delete-button">Delete</button>
+                <button type="button" class="btn btn--primary btn--pill btn--full retry-button">Edit & Resend</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"></a>
+      </div>
+
+      <!-- Invite Modal -->
+      <div class="modal fixed-header" id="inviteModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeInviteModal"></button>
+          <div class="modal-title">Invite Friends</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <p class="modal-summary">
+              Invite your friends to join Liberdus. You may edit the message before sharing.
+            </p>
+            <form id="inviteForm" class="form--narrow">
+              <div class="form-group">
+                <label for="inviteMessage">Message</label>
+                <textarea id="inviteMessage" class="form-control" rows="4" placeholder="Edit the message that will be shared"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full">Share Invitation</button>
+                <button type="button" id="resetInviteMessage" class="btn btn--secondary btn--pill btn--full">Reset Message</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Bridge Modal -->
+      <div class="modal fixed-header" id="bridgeModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeBridgeModal"></button>
+          <div class="modal-title">Bridge</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <p class="bridge-explanation" style="margin-bottom: 1rem">
+              Bridge allows you to transfer LIB tokens between Liberdus and other networks.
+            </p>
+            <form id="bridgeForm" class="form--narrow">
+              <div class="form-group">
+                <label for="bridgeDirection">Bridge Direction</label>
+                <select id="bridgeDirection" class="form-control">
+                  <option value="in">From External Network to Liberdus</option>
+                  <option value="out">From Liberdus to External Network</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="bridgeNetwork">Select Network</label>
+                <select id="bridgeNetwork" class="form-control">
+                  <!-- Network options will be populated from network.js -->
+                </select>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--pill btn--full">Continue</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <!-- Migrate Accounts Modal -->
+      <div class="modal fixed-header" id="migrateAccountsModal">
+        <div class="modal-header">
+          <button class="back-button" id="closeMigrateAccountsModal"></button>
+          <div class="modal-title">Migrate Accounts</div>
+        </div>
+        <div class="modal-content">
+          <div class="form-container">
+            <p class="modal-summary">
+              Select accounts to migrate from other networks.
+            </p>
+            <div class="account-list" id="migrateAccountList">
+              <!-- Three sections will be rendered here -->
+            </div>
+            <button type="button" id="submitMigrateAccounts" class="btn btn--primary btn--pill btn--full">Migrate Accounts</button>
+            <div id="errorAndInconsistentAccounts" class="form-text warning-text-migrate-accounts">
+              <!-- Error and inconsistent accounts will be rendered here -->
+            </div>
+          </div>
+        </div>
+        <a class="last-item" href="#"> </a>
+      </div>
+
+      <a class="last-item" href="#"> </a>
+    </div>
+    <!-- Audio element for notification sounds -->
+    <audio id="notificationSound" src="media/chatSound.mp3" preload="auto"></audio>
+    <audio id="transferSound" src="media/paymentSound.mp3" preload="auto"></audio>
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+    <!-- Update toast template -->
+    <template id="updateToastTemplate">
+      <div class="toast-update-title">New App Update Available</div>
+      <a href="#" class="toast-update-button" id="updateToastButton">Update now</a>
+    </template>
+  </body>
+</html>
